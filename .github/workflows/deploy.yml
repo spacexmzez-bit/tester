@@ -1,0 +1,56 @@
+name: Deploy Web App & Cloudflare Worker
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  # Deploy static frontend to GitHub Pages
+  deploy-pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Root directory containing index.html and setup.html
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # Deploy Cloudflare Worker
+  deploy-worker:
+    runs-on: ubuntu-latest
+    # Only run worker deploy if Cloudflare secret is available
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy Cloudflare Worker
+        uses: cloudflare/wrangler-action@v3
+        if: env.CLOUDFLARE_API_TOKEN != ''
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
