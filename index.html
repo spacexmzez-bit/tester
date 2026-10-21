@@ -1,0 +1,2261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Play 12-Tester Tracker & Cross-Device Sync</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .day-box { transition: all 0.15s ease; }
+    .day-box:hover { transform: scale(1.1); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <!-- Brand Logo & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-sm font-extrabold text-base tracking-tight">
+          ▶12
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Google Play 12-Tester Tracker</h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              14-Day Cycle
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 hidden sm:block">Closed testing compliance &amp; cross-device sync</p>
+        </div>
+      </div>
+
+      <!-- Header Actions & Sync Status -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Switch to Testing Other People's Apps -->
+        <button id="btnNavTestingOthers" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition" title="Go to Testing Other People's Apps">
+          <span>Testing Others</span>
+          <span class="hidden sm:inline">(Mazen/Marwan)</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+
+        <!-- Cloudflare Sync Status Pill -->
+        <button id="btnSyncStatus" type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" title="Click to open Cloudflare sync settings">
+          <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="syncStatusText" class="hidden md:inline">Local Only</span>
+          <svg id="syncIconSpin" class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+
+        <!-- Quick Sync Button -->
+        <button id="btnQuickSync" type="button" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 transition" title="Sync with Cloudflare now">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+
+        <!-- Setup Guide Button -->
+        <button id="btnOpenGuide" type="button" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition" title="Open setup instructions">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+          <span>Guide</span>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="btnOpenSettings" type="button" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-slate-200 transition" title="Open Settings">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+
+        <!-- Add App Button -->
+        <button id="btnOpenAddApp" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm shadow-emerald-600/20 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span>Add App</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
+
+    <!-- Metrics Cards Banner -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Apps</p>
+          <p id="statTotalApps" class="text-2xl font-extrabold text-slate-900 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Goal Reached (12+)</p>
+          <p id="statGoalMet" class="text-2xl font-extrabold text-emerald-600 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">In Testing</p>
+          <p id="statInTesting" class="text-2xl font-extrabold text-amber-600 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Testers</p>
+          <p id="statTotalTesters" class="text-2xl font-extrabold text-indigo-600 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Search Input -->
+        <div class="relative flex-1 max-w-md">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="inputSearchApp" placeholder="Search apps by name..." class="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+
+        <!-- Sort Select -->
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-500 whitespace-nowrap">Sort by:</label>
+          <select id="selectSortApps" class="text-xs sm:text-sm border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <option value="recent">Recently Added</option>
+            <option value="testers_desc">Most Testers</option>
+            <option value="testers_asc">Least Testers</option>
+            <option value="name_asc">App Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1" id="categoryFilterContainer">
+        <!-- Dynamically rendered category pills -->
+      </div>
+    </div>
+
+    <!-- App Cards Grid Container -->
+    <div id="appGridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Dynamically populated app cards -->
+    </div>
+
+    <!-- Empty State (Shown when no apps match) -->
+    <div id="emptyStateContainer" class="hidden bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center max-w-lg mx-auto">
+      <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+        📱
+      </div>
+      <h3 class="text-base font-bold text-slate-900">No Apps Found</h3>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+        Add your first Google Play app to begin tracking testers, logging daily usage, and syncing across your devices.
+      </p>
+      <div class="mt-5 flex items-center justify-center gap-3">
+        <button id="btnEmptyAddApp" type="button" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+          + Add First App
+        </button>
+        <button id="btnEmptySampleData" type="button" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition">
+          Load Sample Apps
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL 1: APP DETAIL & TESTERS MANAGER (Main Interactive Hub) -->
+  <div id="modalAppDetail" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+
+      <!-- Modal Header -->
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+          <div id="detailAppIconPreview" class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-xs shrink-0 font-bold bg-indigo-600 text-white">
+            📱
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 id="detailAppName" class="text-lg sm:text-xl font-bold text-slate-900 truncate">App Name</h2>
+              <span id="detailAppCategoryBadge" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">Category</span>
+              <span id="detailAppGoalStatus" class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">0/12 Testers</span>
+            </div>
+            <!-- Testing link row -->
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-xs text-slate-400">Opt-in Link:</span>
+              <a id="detailAppTestingLink" href="#" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-800 underline truncate max-w-xs sm:max-w-md">https://play.google.com/...</a>
+              <button id="btnCopyTestingLink" type="button" class="text-slate-400 hover:text-slate-700 p-1" title="Copy Testing Link">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button id="btnCloseAppDetail" type="button" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 flex items-center justify-center transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Quick Summary Stats Strip -->
+      <div class="px-6 py-3 bg-indigo-50/50 border-b border-indigo-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-4">
+          <div><span class="text-slate-500">Single Entry Testers:</span> <strong id="detailCountSingle" class="text-slate-900 font-bold">0</strong></div>
+          <div><span class="text-slate-500">Community Testers:</span> <strong id="detailCountCommunity" class="text-slate-900 font-bold">0</strong></div>
+          <div><span class="text-slate-500">Completed 14 Days:</span> <strong id="detailCount14DaysDone" class="text-emerald-700 font-bold">0</strong></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500">Google Play Target:</span>
+          <span class="font-bold text-slate-800">12 Testers for 14 Days</span>
+        </div>
+      </div>
+
+      <!-- Testers Tabs (Single Entry vs Community) -->
+      <div class="px-6 pt-3 border-b border-slate-200 flex items-center gap-2">
+        <button id="tabBtnSingle" type="button" class="px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 border-emerald-600 text-emerald-700 transition">
+          1. Single Entry (Detailed Tracking &amp; Daily Usage)
+        </button>
+        <button id="tabBtnCommunity" type="button" class="px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition">
+          2. Testers Community (Opt-in List)
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+
+        <!-- TAB 1: SINGLE ENTRY VIEW -->
+        <div id="tabContentSingle" class="space-y-6">
+
+          <!-- Add Single Entry Tester Form -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+              Add Single Tester (with 14-Day Calculation)
+            </h4>
+            <form id="formAddSingleTester" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+              <div class="sm:col-span-5">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Tester Name / Email *</label>
+                <input type="text" id="inputSingleTesterName" required placeholder="e.g. Alex Rivera or alex@example.com" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              </div>
+
+              <div class="sm:col-span-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Date App Downloaded *</label>
+                <input type="date" id="inputSingleDownloadDate" required class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              </div>
+
+              <div class="sm:col-span-3">
+                <button type="submit" class="w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+                  + Add Tester
+                </button>
+              </div>
+
+              <!-- Auto Calculated Ending Date preview hint -->
+              <div class="sm:col-span-12 text-xs text-slate-500 flex items-center gap-1.5">
+                <span class="text-emerald-600 font-medium">Auto-Calculation:</span>
+                <span>Ending Date will be set to:</span>
+                <strong id="previewCalcEndingDate" class="text-slate-800 font-semibold">Today + 14 days</strong>
+                <span class="text-slate-400">(satisfies Google Play requirement)</span>
+              </div>
+            </form>
+          </div>
+
+          <!-- Single Testers List -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-bold text-slate-900">Single Entry Testers (<span id="countSingleBadge">0</span>)</h4>
+              <p class="text-xs text-slate-500">Click day buttons (1-14) or "Log Today" to track daily usage</p>
+            </div>
+
+            <div id="singleTestersListContainer" class="space-y-3">
+              <!-- Dynamically populated tester cards -->
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: TESTERS COMMUNITY VIEW -->
+        <div id="tabContentCommunity" class="hidden space-y-6">
+
+          <!-- Add Community Tester Form -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              Add Community Tester (Opt-in Tracking)
+            </h4>
+            <form id="formAddCommunityTester" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+              <div class="sm:col-span-5">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Tester Name / Handle *</label>
+                <input type="text" id="inputCommTesterName" required placeholder="e.g. u/DevTester99 or Discord Name" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              </div>
+
+              <div class="sm:col-span-4">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Date Joined *</label>
+                <input type="date" id="inputCommJoinDate" required class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              </div>
+
+              <div class="sm:col-span-3">
+                <button type="submit" class="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+                  + Add to Community
+                </button>
+              </div>
+
+              <div class="sm:col-span-12">
+                <label class="block text-xs font-medium text-slate-500 mb-1">Optional Source / Note</label>
+                <input type="text" id="inputCommNotes" placeholder="e.g. Reddit r/AndroidClosedTesting, mutual tester trade" class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-600">
+              </div>
+            </form>
+          </div>
+
+          <!-- Community Testers List -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-bold text-slate-900">Community Testers (<span id="countCommBadge">0</span>)</h4>
+              <p class="text-xs text-slate-500">Track mutual testers recruited from communities &amp; groups</p>
+            </div>
+
+            <div id="commTestersListContainer" class="space-y-2">
+              <!-- Dynamically populated community testers -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <button id="btnDeleteCurrentApp" type="button" class="text-xs text-red-600 hover:text-red-700 hover:underline">
+          Delete this app
+        </button>
+        <button id="btnDoneAppDetail" type="button" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-semibold rounded-lg transition">
+          Done &amp; Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: ADD / EDIT APP -->
+  <div id="modalAddApp" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="modalAppFormTitle" class="text-base font-bold text-slate-900">Add New App</h3>
+        <button id="btnCloseAddApp" type="button" class="text-slate-400 hover:text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="formAppSave" class="p-6 space-y-4">
+        <input type="hidden" id="inputAppEditId" value="">
+
+        <!-- App Name -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">App Name *</label>
+          <input type="text" id="inputAppName" required placeholder="e.g. FitPulse Daily Tracker" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+        </div>
+
+        <!-- Testing Link -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Google Play Testing Link *</label>
+          <input type="url" id="inputAppTestingLink" required placeholder="https://play.google.com/apps/testing/com.yourcompany.app" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+          <p class="text-[11px] text-slate-400 mt-1">From Google Play Console &gt; Closed Testing &gt; Testers &gt; How testers join</p>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-700">Category *</label>
+            <button id="btnQuickConfigCategories" type="button" class="text-[11px] text-emerald-600 hover:underline">+ Manage Categories</button>
+          </div>
+          <select id="selectAppCategory" required class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <!-- Dynamically populated categories -->
+          </select>
+        </div>
+
+        <!-- Optional Icon -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">App Icon (Optional)</label>
+          <div class="flex items-center gap-3">
+            <div id="appIconPreviewBox" class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-300 flex items-center justify-center text-xl shrink-0 overflow-hidden">
+              📱
+            </div>
+            <div class="flex-1 space-y-2">
+              <input type="text" id="inputAppIconUrl" placeholder="Image URL (https://...) or Emoji icon" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <!-- Preset icon picker pills -->
+              <div class="flex items-center gap-1.5 flex-wrap" id="iconPresetPills">
+                <button type="button" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-xs icon-preset-btn" data-icon="📱">📱 Phone</button>
+                <button type="button" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-xs icon-preset-btn" data-icon="🎮">🎮 Game</button>
+                <button type="button" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-xs icon-preset-btn" data-icon="⚡">⚡ Tool</button>
+                <button type="button" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-xs icon-preset-btn" data-icon="💰">💰 Finance</button>
+                <button type="button" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-xs icon-preset-btn" data-icon="🏋️">🏋️ Health</button>
+                <button type="button" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-xs icon-preset-btn" data-icon="🚀">🚀 Launch</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Target Testers Goal -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Testing Target</label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="inputAppTargetTesters" min="1" max="100" value="12" class="w-24 text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            <span class="text-xs text-slate-500">Testers (Google standard is 12 for 14 continuous days)</span>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button id="btnCancelAppSave" type="button" class="px-4 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+            Save App
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: SETTINGS (Categories & Cloudflare Sync) -->
+  <div id="modalSettings" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          Settings &amp; Configuration
+        </h3>
+        <button id="btnCloseSettings" type="button" class="text-slate-400 hover:text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Settings Navigation Tabs -->
+      <div class="px-6 pt-3 border-b border-slate-200 flex items-center gap-4 text-xs sm:text-sm">
+        <button id="tabSettingsSync" type="button" class="pb-2 font-semibold border-b-2 border-emerald-600 text-emerald-700">
+          Cloudflare Sync
+        </button>
+        <button id="tabSettingsCategories" type="button" class="pb-2 font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800">
+          App Categories
+        </button>
+        <button id="tabSettingsBackup" type="button" class="pb-2 font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800">
+          Backup &amp; Data
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 space-y-6">
+
+        <!-- SETTINGS TAB 1: CLOUDFLARE SYNC -->
+        <div id="viewSettingsSync" class="space-y-5">
+          <div class="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4 text-xs text-indigo-900 leading-relaxed">
+            <h4 class="font-bold text-sm mb-1 text-indigo-950 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Cross-Device Sync (Cloudflare Worker)
+            </h4>
+            Enter your deployed Cloudflare Worker URL and a secret <strong>Sync Passkey</strong>. Any device (phone, laptop, desktop) using the exact same passkey will automatically stay in sync!
+          </div>
+
+          <form id="formCloudflareSync" class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Cloudflare Worker API URL</label>
+              <input type="url" id="inputWorkerUrl" placeholder="https://play-tester-sync.youraccount.workers.dev" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+              <p class="text-[11px] text-slate-400 mt-1">The URL where <code class="font-mono text-slate-600">worker.js</code> is deployed on Cloudflare.</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Sync Passkey (Your Private Encryption Key)</label>
+              <div class="flex gap-2">
+                <input type="text" id="inputSyncKey" placeholder="e.g. dev-passkey-491a" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <button type="button" id="btnGenSettingsKey" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg transition whitespace-nowrap">Generate</button>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1">Use this same passkey on your other devices to access the same apps.</p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <input type="checkbox" id="chkAutoSync" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+              <label for="chkAutoSync" class="text-xs text-slate-700 font-medium">Auto-sync on changes (Debounced upload)</label>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3 pt-2">
+              <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+                Save Sync Settings
+              </button>
+              <button type="button" id="btnTestWorkerConnection" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition">
+                Test Connection
+              </button>
+              <button type="button" id="btnPullFromCloud" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs sm:text-sm font-medium rounded-lg transition">
+                Pull from Cloud Now
+              </button>
+            </div>
+
+            <!-- Sync Test Result Output -->
+            <div id="syncTestResult" class="hidden p-3 rounded-lg text-xs font-mono"></div>
+          </form>
+        </div>
+
+        <!-- SETTINGS TAB 2: CATEGORIES CONFIGURATION -->
+        <div id="viewSettingsCategories" class="hidden space-y-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="text-sm font-bold text-slate-900">Configured App Categories</h4>
+              <p class="text-xs text-slate-500">Categories help organize apps on your dashboard</p>
+            </div>
+          </div>
+
+          <!-- Add Category Form -->
+          <form id="formAddCategory" class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row items-end gap-3">
+            <div class="flex-1 w-full">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">New Category Name</label>
+              <input type="text" id="inputNewCatName" required placeholder="e.g. Social, Fitness, Productivity" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+            </div>
+
+            <div class="w-full sm:w-40">
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Badge Color</label>
+              <select id="selectNewCatColor" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <option value="emerald">Emerald Green</option>
+                <option value="indigo">Indigo Blue</option>
+                <option value="purple">Purple</option>
+                <option value="amber">Amber Gold</option>
+                <option value="rose">Rose Red</option>
+                <option value="cyan">Cyan Teal</option>
+                <option value="slate">Neutral Slate</option>
+              </select>
+            </div>
+
+            <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition whitespace-nowrap">
+              + Add Category
+            </button>
+          </form>
+
+          <!-- Categories List -->
+          <div id="settingsCategoriesList" class="space-y-2">
+            <!-- Dynamically populated category rows -->
+          </div>
+        </div>
+
+        <!-- SETTINGS TAB 3: BACKUP & DATA -->
+        <div id="viewSettingsBackup" class="hidden space-y-5">
+          <div class="border border-slate-200 rounded-xl p-4 space-y-3">
+            <h4 class="text-sm font-bold text-slate-900">Export / Import Local Data</h4>
+            <p class="text-xs text-slate-500">Download your data as a JSON file or restore from a backup.</p>
+
+            <div class="flex flex-wrap items-center gap-3">
+              <button id="btnExportJson" type="button" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 transition">
+                Export Data (JSON)
+              </button>
+              <label class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-medium rounded-lg border border-slate-200 transition cursor-pointer">
+                Import Data (JSON)
+                <input type="file" id="inputImportJson" accept=".json" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <div class="border border-slate-200 rounded-xl p-4 space-y-3">
+            <h4 class="text-sm font-bold text-slate-900">Sample Data</h4>
+            <p class="text-xs text-slate-500">Load sample apps with testers and daily usage logged to explore the dashboard.</p>
+            <button id="btnLoadSampleData" type="button" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs sm:text-sm font-medium rounded-lg transition">
+              Load Sample Apps &amp; Testers
+            </button>
+          </div>
+
+          <div class="border border-red-200 bg-red-50/50 rounded-xl p-4 space-y-3">
+            <h4 class="text-sm font-bold text-red-900">Danger Zone</h4>
+            <p class="text-xs text-red-700">Clear all apps, testers, and categories stored in this browser.</p>
+            <button id="btnClearAllData" type="button" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-semibold rounded-lg transition">
+              Clear All Data
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
+        <button id="btnCloseSettingsBottom" type="button" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-semibold rounded-lg transition">
+          Close Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETUP GUIDE (Embedded for instant view) -->
+  <div id="modalGuide" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">▶12</div>
+          <h3 class="text-base font-bold text-slate-900">Google Play 12-Tester &amp; Cloudflare Setup Guide</h3>
+        </div>
+        <button id="btnCloseGuide" type="button" class="text-slate-400 hover:text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 space-y-6 text-xs sm:text-sm text-slate-700">
+        <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-indigo-900">
+          <p class="font-bold text-sm mb-1">Overview: Zero-Overengineering Cross-Device Sync</p>
+          <p class="leading-relaxed">This site is completely static (hosted on GitHub Pages) and uses a simple, secure Cloudflare Worker to sync state across devices using a private Sync Passkey stored in Cloudflare KV.</p>
+        </div>
+
+        <div class="space-y-4">
+          <div class="border-l-4 border-indigo-600 pl-4 py-1">
+            <h4 class="font-bold text-slate-900">Step 1: Push repository to GitHub</h4>
+            <p class="text-slate-500 mt-1">Push <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">index.html</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">setup.html</code>, <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">worker.js</code>, and <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">wrangler.toml</code> to your GitHub repository.</p>
+          </div>
+
+          <div class="border-l-4 border-emerald-600 pl-4 py-1">
+            <h4 class="font-bold text-slate-900">Step 2: Enable GitHub Pages</h4>
+            <p class="text-slate-500 mt-1">In your GitHub repository, open <strong>Settings &rarr; Pages</strong>. Under <strong>Source</strong>, select <strong>GitHub Actions</strong>. The included <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">deploy.yml</code> workflow will automatically publish your site on every push.</p>
+          </div>
+
+          <div class="border-l-4 border-teal-600 pl-4 py-1">
+            <h4 class="font-bold text-slate-900">Step 3: Deploy Cloudflare Worker &amp; KV</h4>
+            <div class="bg-slate-900 text-slate-200 rounded-lg p-3 font-mono text-xs mt-2 overflow-x-auto space-y-1">
+              <div># 1. Login to Cloudflare</div>
+              <div>npx wrangler login</div>
+              <div># 2. Create the KV namespace</div>
+              <div>npx wrangler kv:namespace create PLAY_TESTER_KV</div>
+              <div># 3. Paste the returned ID into wrangler.toml</div>
+              <div># 4. Deploy worker</div>
+              <div>npx wrangler deploy</div>
+            </div>
+          </div>
+
+          <div class="border-l-4 border-amber-600 pl-4 py-1">
+            <h4 class="font-bold text-slate-900">Step 4: Connect Your Devices</h4>
+            <p class="text-slate-500 mt-1">Open <strong>Settings (⚙)</strong> in the top navigation, paste your Worker URL (e.g. <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">https://play-tester-sync.yourname.workers.dev</code>) and set your private <strong>Sync Passkey</strong>. Enter the exact same passkey on your other phone or computer, and your data syncs automatically!</p>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
+        <button id="btnCloseGuideBottom" type="button" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-semibold rounded-lg transition">Close Guide</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- IN-PAGE CONFIRMATION MODAL -->
+  <div id="modalConfirm" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 border border-slate-200 space-y-4">
+      <h4 id="confirmModalTitle" class="text-sm font-bold text-slate-900">Confirm Action</h4>
+      <p id="confirmModalMessage" class="text-xs text-slate-600">Are you sure you want to proceed?</p>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="btnConfirmCancel" type="button" class="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancel</button>
+        <button id="btnConfirmOk" type="button" class="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+  (function() {
+    'use strict';
+
+    // -------------------------------------------------------------
+    // CONSTANTS & DEFAULT STATE
+    // -------------------------------------------------------------
+    const STORAGE_KEY_DATA = 'gp_tester_data';
+    const STORAGE_KEY_CONFIG = 'gp_tester_sync_config';
+
+    const DEFAULT_CATEGORIES = [
+      { id: 'cat_prod', name: 'Productivity', color: 'indigo' },
+      { id: 'cat_games', name: 'Games', color: 'purple' },
+      { id: 'cat_tools', name: 'Tools & Utilities', color: 'emerald' },
+      { id: 'cat_finance', name: 'Finance', color: 'amber' },
+      { id: 'cat_health', name: 'Health & Fitness', color: 'rose' }
+    ];
+
+    // Color definitions for badges
+    const COLOR_MAP = {
+      emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+      indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
+      purple: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+      amber: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+      rose: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' },
+      cyan: { bg: 'bg-cyan-50', text: 'text-cyan-700', border: 'border-cyan-200' },
+      slate: { bg: 'bg-slate-100', text: 'text-slate-700', border: 'border-slate-200' }
+    };
+
+    // State
+    let state = {
+      apps: [],
+      categories: [...DEFAULT_CATEGORIES],
+      filterCategory: 'all',
+      searchQuery: '',
+      sortBy: 'recent',
+      activeAppId: null,
+      activeTesterTab: 'single', // 'single' or 'community'
+      syncConfig: {
+        workerUrl: '',
+        syncKey: '',
+        autoSync: true,
+        lastSync: null
+      },
+      syncStatus: 'idle', // 'idle', 'syncing', 'success', 'error'
+      syncErrorMsg: ''
+    };
+
+    let debounceSyncTimer = null;
+    let pendingConfirmCallback = null;
+
+    // -------------------------------------------------------------
+    // LOCAL STORAGE OPERATIONS
+    // -------------------------------------------------------------
+    function loadStateFromStorage() {
+      try {
+        const rawData = localStorage.getItem(STORAGE_KEY_DATA);
+        if (rawData) {
+          const parsed = JSON.parse(rawData);
+          if (Array.isArray(parsed.apps)) state.apps = parsed.apps;
+          if (Array.isArray(parsed.categories) && parsed.categories.length > 0) {
+            state.categories = parsed.categories;
+          }
+        }
+      } catch (e) {
+        console.error('Error loading data from localStorage', e);
+      }
+
+      try {
+        const rawConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
+        if (rawConfig) {
+          state.syncConfig = { ...state.syncConfig, ...JSON.parse(rawConfig) };
+        }
+      } catch (e) {
+        console.error('Error loading config from localStorage', e);
+      }
+    }
+
+    function saveStateToStorage(triggerSync = true) {
+      try {
+        const payload = {
+          apps: state.apps,
+          categories: state.categories,
+          updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(payload));
+      } catch (e) {
+        console.error('Failed to save to localStorage', e);
+      }
+
+      if (triggerSync && state.syncConfig.autoSync && state.syncConfig.workerUrl && state.syncConfig.syncKey) {
+        scheduleDebouncedSync();
+      }
+    }
+
+    function saveConfigToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+      } catch (e) {
+        console.error('Failed to save config', e);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // CLOUDFLARE WORKER SYNC ENGINE
+    // -------------------------------------------------------------
+    function updateSyncBadgeUI() {
+      const dot = document.getElementById('syncIndicatorDot');
+      const text = document.getElementById('syncStatusText');
+      const icon = document.getElementById('syncIconSpin');
+
+      if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) {
+        dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+        text.textContent = 'Local Only';
+        icon.classList.remove('animate-spin');
+        return;
+      }
+
+      if (state.syncStatus === 'syncing') {
+        dot.className = 'w-2 h-2 rounded-full bg-blue-500 animate-pulse';
+        text.textContent = 'Syncing...';
+        icon.classList.add('animate-spin');
+      } else if (state.syncStatus === 'error') {
+        dot.className = 'w-2 h-2 rounded-full bg-red-500';
+        text.textContent = 'Sync Error';
+        icon.classList.remove('animate-spin');
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        if (state.syncConfig.lastSync) {
+          const d = new Date(state.syncConfig.lastSync);
+          text.textContent = 'Synced ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else {
+          text.textContent = 'Connected';
+        }
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    function scheduleDebouncedSync() {
+      if (debounceSyncTimer) clearTimeout(debounceSyncTimer);
+      debounceSyncTimer = setTimeout(() => {
+        pushDataToCloudflare();
+      }, 1500);
+    }
+
+    async function pushDataToCloudflare(showNotification = false) {
+      if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) return;
+
+      state.syncStatus = 'syncing';
+      updateSyncBadgeUI();
+
+      let url = state.syncConfig.workerUrl.trim().replace(/\/+$/, '') + '/api/sync';
+      try {
+        const payload = {
+          apps: state.apps,
+          categories: state.categories,
+          updatedAt: new Date().toISOString(),
+          clientVersion: '1.0'
+        };
+
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-sync-key': state.syncConfig.syncKey.trim()
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          throw new Error(`Worker returned ${resp.status}`);
+        }
+
+        const resData = await resp.json();
+        state.syncStatus = 'success';
+        state.syncConfig.lastSync = new Date().toISOString();
+        saveConfigToStorage();
+        updateSyncBadgeUI();
+
+        if (showNotification) {
+          showToast('Data pushed to Cloudflare successfully!', 'success');
+        }
+      } catch (err) {
+        state.syncStatus = 'error';
+        state.syncErrorMsg = err.message;
+        updateSyncBadgeUI();
+        console.error('Cloudflare push failed', err);
+        if (showNotification) {
+          showToast('Sync push failed: ' + err.message, 'error');
+        }
+      }
+    }
+
+    async function pullDataFromCloudflare(showNotification = true) {
+      if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) {
+        showToast('Please set Cloudflare Worker URL and Sync Passkey in Settings first.', 'info');
+        return;
+      }
+
+      state.syncStatus = 'syncing';
+      updateSyncBadgeUI();
+
+      let url = state.syncConfig.workerUrl.trim().replace(/\/+$/, '') + '/api/sync';
+      try {
+        const resp = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'x-sync-key': state.syncConfig.syncKey.trim()
+          }
+        });
+
+        if (!resp.ok) {
+          throw new Error(`Worker returned ${resp.status}`);
+        }
+
+        const json = await resp.json();
+        if (json.success && json.data) {
+          if (Array.isArray(json.data.apps)) state.apps = json.data.apps;
+          if (Array.isArray(json.data.categories) && json.data.categories.length > 0) {
+            state.categories = json.data.categories;
+          }
+          state.syncStatus = 'success';
+          state.syncConfig.lastSync = new Date().toISOString();
+          saveStateToStorage(false);
+          saveConfigToStorage();
+          updateSyncBadgeUI();
+          renderDashboard();
+          if (showNotification) {
+            showToast(`Pulled ${state.apps.length} apps from Cloudflare!`, 'success');
+          }
+        } else {
+          state.syncStatus = 'success';
+          updateSyncBadgeUI();
+          if (showNotification) {
+            showToast('Cloud has no data yet for this passkey. Pushing local data...', 'info');
+            pushDataToCloudflare(true);
+          }
+        }
+      } catch (err) {
+        state.syncStatus = 'error';
+        state.syncErrorMsg = err.message;
+        updateSyncBadgeUI();
+        console.error('Cloudflare pull failed', err);
+        if (showNotification) {
+          showToast('Pull failed: ' + err.message, 'error');
+        }
+      }
+    }
+
+    // -------------------------------------------------------------
+    // DATE & 14-DAY CALCULATION HELPERS
+    // -------------------------------------------------------------
+    function toISODate(dateObj) {
+      return dateObj.toISOString().split('T')[0];
+    }
+
+    function calculateEndingDate(downloadDateStr, daysToAdd = 14) {
+      if (!downloadDateStr) return '';
+      const d = new Date(downloadDateStr);
+      d.setDate(d.getDate() + daysToAdd);
+      return toISODate(d);
+    }
+
+    function getDaysDiffFromToday(targetDateStr) {
+      if (!targetDateStr) return 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(targetDateStr);
+      target.setHours(0, 0, 0, 0);
+      const diffTime = target.getTime() - today.getTime();
+      return Math.round(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    function getDaysSinceDate(pastDateStr) {
+      if (!pastDateStr) return 0;
+      const past = new Date(pastDateStr);
+      past.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diffTime = today.getTime() - past.getTime();
+      return Math.max(0, Math.floor(diffTime / (1000 * 60 * 60 * 24)));
+    }
+
+    // -------------------------------------------------------------
+    // UI RENDERING - DASHBOARD & STATS
+    // -------------------------------------------------------------
+    function renderStats() {
+      const totalApps = state.apps.length;
+      let goalMetCount = 0;
+      let totalTesters = 0;
+      let inTestingCount = 0;
+
+      state.apps.forEach(app => {
+        const singleTesters = app.singleTesters || [];
+        const commTesters = app.commTesters || [];
+        const count = singleTesters.length + commTesters.length;
+        totalTesters += count;
+
+        const target = app.targetTesters || 12;
+        if (count >= target) {
+          goalMetCount++;
+        } else if (count > 0) {
+          inTestingCount++;
+        }
+      });
+
+      document.getElementById('statTotalApps').textContent = totalApps;
+      document.getElementById('statGoalMet').textContent = goalMetCount;
+      document.getElementById('statInTesting').textContent = inTestingCount;
+      document.getElementById('statTotalTesters').textContent = totalTesters;
+    }
+
+    function renderCategoryFilterPills() {
+      const container = document.getElementById('categoryFilterContainer');
+      container.innerHTML = '';
+
+      // "All" Pill
+      const btnAll = document.createElement('button');
+      btnAll.type = 'button';
+      const isAll = state.filterCategory === 'all';
+      btnAll.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
+        isAll ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+      }`;
+      btnAll.textContent = `All Apps (${state.apps.length})`;
+      btnAll.addEventListener('click', () => {
+        state.filterCategory = 'all';
+        renderCategoryFilterPills();
+        renderDashboard();
+      });
+      container.appendChild(btnAll);
+
+      // Individual Category Pills
+      state.categories.forEach(cat => {
+        const count = state.apps.filter(a => a.categoryId === cat.id).length;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        const isSelected = state.filterCategory === cat.id;
+        const colorStyle = COLOR_MAP[cat.color] || COLOR_MAP.slate;
+
+        btn.className = `px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+          isSelected
+            ? 'bg-slate-900 text-white shadow-xs'
+            : `${colorStyle.bg} ${colorStyle.text} border ${colorStyle.border} hover:opacity-80`
+        }`;
+        btn.innerHTML = `<span>${escapeHtml(cat.name)}</span> <span class="text-[10px] opacity-75">(${count})</span>`;
+        btn.addEventListener('click', () => {
+          state.filterCategory = cat.id;
+          renderCategoryFilterPills();
+          renderDashboard();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderDashboard() {
+      renderStats();
+      renderCategoryFilterPills();
+
+      const grid = document.getElementById('appGridContainer');
+      const emptyState = document.getElementById('emptyStateContainer');
+      grid.innerHTML = '';
+
+      // Filter apps
+      let filtered = state.apps.filter(app => {
+        const matchesCat = state.filterCategory === 'all' || app.categoryId === state.filterCategory;
+        const matchesSearch = !state.searchQuery || app.name.toLowerCase().includes(state.searchQuery.toLowerCase());
+        return matchesCat && matchesSearch;
+      });
+
+      // Sort apps
+      filtered.sort((a, b) => {
+        if (state.sortBy === 'testers_desc') {
+          const tA = (a.singleTesters?.length || 0) + (a.commTesters?.length || 0);
+          const tB = (b.singleTesters?.length || 0) + (b.commTesters?.length || 0);
+          return tB - tA;
+        } else if (state.sortBy === 'testers_asc') {
+          const tA = (a.singleTesters?.length || 0) + (a.commTesters?.length || 0);
+          const tB = (b.singleTesters?.length || 0) + (b.commTesters?.length || 0);
+          return tA - tB;
+        } else if (state.sortBy === 'name_asc') {
+          return a.name.localeCompare(b.name);
+        } else {
+          // recent
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        }
+      });
+
+      if (filtered.length === 0) {
+        grid.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      grid.classList.remove('hidden');
+      emptyState.classList.add('hidden');
+
+      filtered.forEach(app => {
+        const card = createAppCardElement(app);
+        grid.appendChild(card);
+      });
+    }
+
+    function createAppCardElement(app) {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition flex flex-col overflow-hidden';
+
+      const singleTesters = app.singleTesters || [];
+      const commTesters = app.commTesters || [];
+      const totalTesters = singleTesters.length + commTesters.length;
+      const targetTesters = app.targetTesters || 12;
+      const pct = Math.min(100, Math.round((totalTesters / targetTesters) * 100));
+
+      // Category look up
+      const cat = state.categories.find(c => c.id === app.categoryId) || { name: 'General', color: 'slate' };
+      const catStyle = COLOR_MAP[cat.color] || COLOR_MAP.slate;
+
+      // Status pill
+      let statusHtml = '';
+      if (totalTesters >= targetTesters) {
+        statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+          <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          Goal Reached (${totalTesters}/${targetTesters})
+        </span>`;
+      } else if (totalTesters > 0) {
+        statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+          In Progress (${totalTesters}/${targetTesters})
+        </span>`;
+      } else {
+        statusHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+          Needs Testers (0/${targetTesters})
+        </span>`;
+      }
+
+      // Icon display (emoji or URL)
+      let iconDisplay = '📱';
+      if (app.icon) {
+        if (app.icon.startsWith('http://') || app.icon.startsWith('https://')) {
+          iconDisplay = `<img src="${escapeHtml(app.icon)}" alt="App Icon" class="w-full h-full object-cover">`;
+        } else {
+          iconDisplay = escapeHtml(app.icon);
+        }
+      }
+
+      // Testers breakdown: count single testers who finished 14 days
+      let completed14DaysCount = 0;
+      singleTesters.forEach(t => {
+        const days = getDaysSinceDate(t.downloadDate);
+        if (days >= 14) completed14DaysCount++;
+      });
+
+      card.innerHTML = `
+        <div class="p-5 flex-1 space-y-4">
+          <!-- Card Header: Icon, Name, Category -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl shrink-0 overflow-hidden shadow-xs">
+                ${iconDisplay}
+              </div>
+              <div class="min-w-0">
+                <h3 class="font-bold text-slate-900 text-base truncate" title="${escapeHtml(app.name)}">${escapeHtml(app.name)}</h3>
+                <span class="inline-block mt-0.5 px-2 py-0.5 rounded-md text-[11px] font-semibold ${catStyle.bg} ${catStyle.text} border ${catStyle.border}">
+                  ${escapeHtml(cat.name)}
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1">
+              <button class="btn-edit-app p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition" title="Edit App">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Testing Link Bar -->
+          <div class="bg-slate-50 border border-slate-200 rounded-lg p-2.5 flex items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-1.5 min-w-0">
+              <span class="text-slate-400 font-medium">Link:</span>
+              <a href="${escapeHtml(app.testingLink)}" target="_blank" class="text-indigo-600 hover:underline truncate max-w-[180px] sm:max-w-[220px]" title="${escapeHtml(app.testingLink)}">
+                ${escapeHtml(app.testingLink)}
+              </a>
+            </div>
+            <div class="flex items-center gap-1 shrink-0">
+              <button class="btn-copy-card-link p-1 text-slate-500 hover:text-slate-800 rounded hover:bg-slate-200 transition" title="Copy Testing Link">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+              <a href="${escapeHtml(app.testingLink)}" target="_blank" class="p-1 text-slate-500 hover:text-indigo-600 rounded hover:bg-slate-200 transition" title="Open Link">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- Progress Bar & Status -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-slate-700">12-Tester Goal Progress</span>
+              <span class="font-bold text-slate-900">${totalTesters} / ${targetTesters} (${pct}%)</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-300 ${pct >= 100 ? 'bg-emerald-500' : 'bg-indigo-600'}" style="width: ${pct}%"></div>
+            </div>
+            <div>${statusHtml}</div>
+          </div>
+
+          <!-- Testers Summary Tag Strip -->
+          <div class="pt-2 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs text-slate-600">
+            <div class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <span class="text-slate-400 block text-[10px] uppercase font-semibold">Single Entry</span>
+              <span class="font-bold text-slate-900">${singleTesters.length}</span>
+              <span class="text-[11px] text-emerald-600 ml-1">(${completed14DaysCount} met 14d)</span>
+            </div>
+            <div class="bg-slate-50 rounded-lg p-2 border border-slate-100">
+              <span class="text-slate-400 block text-[10px] uppercase font-semibold">Community</span>
+              <span class="font-bold text-slate-900">${commTesters.length}</span>
+              <span class="text-[11px] text-slate-400 ml-1">opt-ins</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Footer Action Button -->
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-200">
+          <button class="btn-manage-app w-full py-2 px-3 bg-white hover:bg-emerald-50 text-emerald-700 hover:text-emerald-800 border border-slate-200 hover:border-emerald-300 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center justify-center gap-2 shadow-2xs">
+            <span>Manage Testers &amp; Log Usage</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </div>
+      `;
+
+      // Event Listeners for card actions
+      card.querySelector('.btn-manage-app').addEventListener('click', () => {
+        openAppDetailModal(app.id);
+      });
+
+      card.querySelector('.btn-edit-app').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditAppModal(app.id);
+      });
+
+      card.querySelector('.btn-copy-card-link').addEventListener('click', (e) => {
+        e.stopPropagation();
+        copyTextToClipboard(app.testingLink, 'Testing link copied to clipboard!');
+      });
+
+      return card;
+    }
+
+    // -------------------------------------------------------------
+    // MODAL: APP DETAIL & TESTERS MANAGEMENT
+    // -------------------------------------------------------------
+    function openAppDetailModal(appId) {
+      state.activeAppId = appId;
+      const app = state.apps.find(a => a.id === appId);
+      if (!app) return;
+
+      // Populate header
+      document.getElementById('detailAppName').textContent = app.name;
+      const cat = state.categories.find(c => c.id === app.categoryId) || { name: 'General', color: 'slate' };
+      const catStyle = COLOR_MAP[cat.color] || COLOR_MAP.slate;
+      const catBadge = document.getElementById('detailAppCategoryBadge');
+      catBadge.textContent = cat.name;
+      catBadge.className = `px-2 py-0.5 rounded-full text-xs font-semibold ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`;
+
+      // Opt-in link
+      const linkEl = document.getElementById('detailAppTestingLink');
+      linkEl.href = app.testingLink;
+      linkEl.textContent = app.testingLink;
+
+      // Icon preview
+      const iconEl = document.getElementById('detailAppIconPreview');
+      if (app.icon && (app.icon.startsWith('http://') || app.icon.startsWith('https://'))) {
+        iconEl.innerHTML = `<img src="${escapeHtml(app.icon)}" class="w-full h-full object-cover">`;
+      } else {
+        iconEl.textContent = app.icon || '📱';
+      }
+
+      // Reset Single Tester Form Date to Today
+      const todayStr = toISODate(new Date());
+      document.getElementById('inputSingleDownloadDate').value = todayStr;
+      updateCalculatedEndingPreview(todayStr);
+
+      // Reset Comm Tester Form Date to Today
+      document.getElementById('inputCommJoinDate').value = todayStr;
+
+      // Set active tab
+      switchTesterTab(state.activeTesterTab || 'single');
+
+      renderAppDetailContent();
+      document.getElementById('modalAppDetail').classList.remove('hidden');
+    }
+
+    function updateCalculatedEndingPreview(downloadDateStr) {
+      const calcEnd = calculateEndingDate(downloadDateStr, 14);
+      const previewEl = document.getElementById('previewCalcEndingDate');
+      if (calcEnd) {
+        const d = new Date(calcEnd);
+        previewEl.textContent = `${calcEnd} (${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})`;
+      } else {
+        previewEl.textContent = 'Enter download date';
+      }
+    }
+
+    function switchTesterTab(tabName) {
+      state.activeTesterTab = tabName;
+      const btnSingle = document.getElementById('tabBtnSingle');
+      const btnComm = document.getElementById('tabBtnCommunity');
+      const contentSingle = document.getElementById('tabContentSingle');
+      const contentComm = document.getElementById('tabContentCommunity');
+
+      if (tabName === 'single') {
+        btnSingle.className = 'px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 border-emerald-600 text-emerald-700 transition';
+        btnComm.className = 'px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition';
+        contentSingle.classList.remove('hidden');
+        contentComm.classList.add('hidden');
+      } else {
+        btnComm.className = 'px-4 py-2 text-xs sm:text-sm font-semibold border-b-2 border-indigo-600 text-indigo-700 transition';
+        btnSingle.className = 'px-4 py-2 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition';
+        contentComm.classList.remove('hidden');
+        contentSingle.classList.add('hidden');
+      }
+    }
+
+    function renderAppDetailContent() {
+      const app = state.apps.find(a => a.id === state.activeAppId);
+      if (!app) return;
+
+      const singleTesters = app.singleTesters || [];
+      const commTesters = app.commTesters || [];
+      const totalTesters = singleTesters.length + commTesters.length;
+      const target = app.targetTesters || 12;
+
+      // Count completed 14 days
+      let completedCount = 0;
+      singleTesters.forEach(t => {
+        if (getDaysSinceDate(t.downloadDate) >= 14) completedCount++;
+      });
+
+      // Update counters
+      document.getElementById('detailCountSingle').textContent = singleTesters.length;
+      document.getElementById('detailCountCommunity').textContent = commTesters.length;
+      document.getElementById('detailCount14DaysDone').textContent = completedCount;
+      document.getElementById('countSingleBadge').textContent = singleTesters.length;
+      document.getElementById('countCommBadge').textContent = commTesters.length;
+
+      const goalStatusEl = document.getElementById('detailAppGoalStatus');
+      if (totalTesters >= target) {
+        goalStatusEl.textContent = `${totalTesters}/${target} Testers (Goal Reached 🎉)`;
+        goalStatusEl.className = 'px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800';
+      } else {
+        goalStatusEl.textContent = `${totalTesters}/${target} Testers (${target - totalTesters} more needed)`;
+        goalStatusEl.className = 'px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800';
+      }
+
+      // Render Single Testers List
+      renderSingleTestersList(app);
+
+      // Render Community Testers List
+      renderCommunityTestersList(app);
+    }
+
+    // -------------------------------------------------------------
+    // SINGLE ENTRY TESTERS & DAILY APP USAGE LOGGING
+    // -------------------------------------------------------------
+    function renderSingleTestersList(app) {
+      const container = document.getElementById('singleTestersListContainer');
+      container.innerHTML = '';
+
+      const testers = app.singleTesters || [];
+      if (testers.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p class="text-xs text-slate-500 font-medium">No single entry testers yet.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Add testers above to calculate their 14-day completion date and track daily usage.</p>
+          </div>
+        `;
+        return;
+      }
+
+      testers.forEach((tester, index) => {
+        const item = document.createElement('div');
+        item.className = 'bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3';
+
+        const downloadDate = tester.downloadDate;
+        const endingDate = tester.endingDate || calculateEndingDate(downloadDate, 14);
+        const daysSinceDownload = getDaysSinceDate(downloadDate);
+        const daysLeft = getDaysDiffFromToday(endingDate);
+        const isCompleted = daysSinceDownload >= 14;
+
+        // Usage logs: array of booleans of length 14
+        const usageLog = Array.isArray(tester.usageLog) && tester.usageLog.length === 14
+          ? tester.usageLog
+          : new Array(14).fill(false);
+        const loggedCount = usageLog.filter(Boolean).length;
+
+        // Status badge
+        let statusBadge = '';
+        if (isCompleted) {
+          statusBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+            <svg class="w-3 h-3 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            14-Day Cycle Completed
+          </span>`;
+        } else {
+          statusBadge = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            Day ${Math.min(14, daysSinceDownload + 1)} of 14 (${Math.max(0, daysLeft)} days left)
+          </span>`;
+        }
+
+        // 14-Day Usage Grid HTML
+        let usageGridHtml = '';
+        for (let day = 1; day <= 14; day++) {
+          const isTicked = usageLog[day - 1] === true;
+          const isCurrentDay = (day === (daysSinceDownload + 1)) && !isCompleted;
+
+          usageGridHtml += `
+            <button type="button" data-day="${day - 1}" class="day-box w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-[11px] font-bold flex flex-col items-center justify-center border transition ${
+              isTicked
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                : (isCurrentDay
+                    ? 'bg-amber-50 text-amber-800 border-amber-400 ring-2 ring-amber-300'
+                    : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100')
+            }" title="Day ${day}: Click to toggle usage logged">
+              <span>D${day}</span>
+              ${isTicked ? '<span class="text-[8px] leading-none">✓</span>' : ''}
+            </button>
+          `;
+        }
+
+        item.innerHTML = `
+          <!-- Tester Row Header -->
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <div class="flex items-center gap-2">
+                <h5 class="font-bold text-slate-900 text-sm">${escapeHtml(tester.name)}</h5>
+                ${statusBadge}
+              </div>
+              <div class="flex items-center gap-3 text-xs text-slate-500 mt-1 flex-wrap">
+                <span>Downloaded: <strong class="text-slate-700">${escapeHtml(downloadDate)}</strong></span>
+                <span>•</span>
+                <span>Ending Date: <strong class="text-emerald-700 font-semibold">${escapeHtml(endingDate)}</strong></span>
+                <span>•</span>
+                <span>Usage Logged: <strong class="text-slate-800">${loggedCount}/14 days</strong></span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button class="btn-log-today px-2.5 py-1 text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg transition" title="Log usage for today">
+                + Log Today
+              </button>
+              <button class="btn-delete-single-tester p-1 text-slate-400 hover:text-red-600 rounded transition" title="Delete tester">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 14-Day Usage Tracker -->
+          <div class="bg-slate-50/70 border border-slate-200/80 rounded-xl p-3">
+            <div class="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+              <span class="font-semibold text-slate-700">Daily App Usage Matrix (14-Day Cycle)</span>
+              <span class="text-slate-400">Click day to toggle check-in</span>
+            </div>
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1">
+              ${usageGridHtml}
+            </div>
+          </div>
+        `;
+
+        // Day click listeners
+        item.querySelectorAll('.day-box').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const dayIdx = parseInt(btn.getAttribute('data-day'), 10);
+            toggleSingleTesterDayUsage(tester.id, dayIdx);
+          });
+        });
+
+        // "Log Today" button listener
+        item.querySelector('.btn-log-today').addEventListener('click', () => {
+          logSingleTesterTodayUsage(tester.id, daysSinceDownload);
+        });
+
+        // Delete tester listener
+        item.querySelector('.btn-delete-single-tester').addEventListener('click', () => {
+          showConfirmDialog('Delete Tester', `Remove tester "${tester.name}" from this app?`, () => {
+            deleteSingleTester(tester.id);
+          });
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    function toggleSingleTesterDayUsage(testerId, dayIdx) {
+      const app = state.apps.find(a => a.id === state.activeAppId);
+      if (!app || !app.singleTesters) return;
+      const tester = app.singleTesters.find(t => t.id === testerId);
+      if (!tester) return;
+
+      if (!Array.isArray(tester.usageLog) || tester.usageLog.length !== 14) {
+        tester.usageLog = new Array(14).fill(false);
+      }
+      tester.usageLog[dayIdx] = !tester.usageLog[dayIdx];
+
+      saveStateToStorage();
+      renderAppDetailContent();
+      renderDashboard();
+      showToast(`Updated usage for Day ${dayIdx + 1}`, 'info');
+    }
+
+    function logSingleTesterTodayUsage(testerId, daysSinceDownload) {
+      const dayIdx = Math.min(13, Math.max(0, daysSinceDownload));
+      const app = state.apps.find(a => a.id === state.activeAppId);
+      if (!app || !app.singleTesters) return;
+      const tester = app.singleTesters.find(t => t.id === testerId);
+      if (!tester) return;
+
+      if (!Array.isArray(tester.usageLog) || tester.usageLog.length !== 14) {
+        tester.usageLog = new Array(14).fill(false);
+      }
+      tester.usageLog[dayIdx] = true;
+
+      saveStateToStorage();
+      renderAppDetailContent();
+      renderDashboard();
+      showToast(`Logged usage for Day ${dayIdx + 1}!`, 'success');
+    }
+
+    function deleteSingleTester(testerId) {
+      const app = state.apps.find(a => a.id === state.activeAppId);
+      if (!app || !app.singleTesters) return;
+      app.singleTesters = app.singleTesters.filter(t => t.id !== testerId);
+
+      saveStateToStorage();
+      renderAppDetailContent();
+      renderDashboard();
+      showToast('Tester removed.', 'info');
+    }
+
+    // -------------------------------------------------------------
+    // COMMUNITY TESTERS
+    // -------------------------------------------------------------
+    function renderCommunityTestersList(app) {
+      const container = document.getElementById('commTestersListContainer');
+      container.innerHTML = '';
+
+      const testers = app.commTesters || [];
+      if (testers.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <p class="text-xs text-slate-500 font-medium">No community testers logged yet.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Quickly log testers recruited from Reddit, Discord, or tester exchange communities.</p>
+          </div>
+        `;
+        return;
+      }
+
+      testers.forEach(tester => {
+        const row = document.createElement('div');
+        row.className = 'bg-white rounded-xl border border-slate-200 p-3.5 flex items-center justify-between gap-3 shadow-xs';
+
+        const daysSinceJoined = getDaysSinceDate(tester.dateJoined);
+
+        row.innerHTML = `
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h5 class="font-bold text-slate-900 text-sm truncate">${escapeHtml(tester.name)}</h5>
+              <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                Joined ${daysSinceJoined} days ago
+              </span>
+            </div>
+            <div class="text-xs text-slate-500 mt-0.5 flex items-center gap-3">
+              <span>Date Joined: <strong class="text-slate-700">${escapeHtml(tester.dateJoined)}</strong></span>
+              ${tester.notes ? `<span>•</span> <span class="text-slate-600 italic truncate max-w-xs">${escapeHtml(tester.notes)}</span>` : ''}
+            </div>
+          </div>
+
+          <button class="btn-delete-comm-tester p-1.5 text-slate-400 hover:text-red-600 rounded transition" title="Delete community tester">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        `;
+
+        row.querySelector('.btn-delete-comm-tester').addEventListener('click', () => {
+          showConfirmDialog('Delete Tester', `Remove community tester "${tester.name}"?`, () => {
+            deleteCommunityTester(tester.id);
+          });
+        });
+
+        container.appendChild(row);
+      });
+    }
+
+    function deleteCommunityTester(testerId) {
+      const app = state.apps.find(a => a.id === state.activeAppId);
+      if (!app || !app.commTesters) return;
+      app.commTesters = app.commTesters.filter(t => t.id !== testerId);
+
+      saveStateToStorage();
+      renderAppDetailContent();
+      renderDashboard();
+      showToast('Community tester removed.', 'info');
+    }
+
+    // -------------------------------------------------------------
+    // ADD / EDIT APP MODAL
+    // -------------------------------------------------------------
+    function openAddAppModal() {
+      document.getElementById('modalAppFormTitle').textContent = 'Add New App';
+      document.getElementById('inputAppEditId').value = '';
+      document.getElementById('inputAppName').value = '';
+      document.getElementById('inputAppTestingLink').value = '';
+      document.getElementById('inputAppIconUrl').value = '';
+      document.getElementById('inputAppTargetTesters').value = '12';
+      document.getElementById('appIconPreviewBox').textContent = '📱';
+
+      populateCategoryDropdown();
+      document.getElementById('modalAddApp').classList.remove('hidden');
+    }
+
+    function openEditAppModal(appId) {
+      const app = state.apps.find(a => a.id === appId);
+      if (!app) return;
+
+      document.getElementById('modalAppFormTitle').textContent = 'Edit App Details';
+      document.getElementById('inputAppEditId').value = app.id;
+      document.getElementById('inputAppName').value = app.name;
+      document.getElementById('inputAppTestingLink').value = app.testingLink;
+      document.getElementById('inputAppIconUrl').value = app.icon || '';
+      document.getElementById('inputAppTargetTesters').value = app.targetTesters || 12;
+
+      populateCategoryDropdown(app.categoryId);
+      updateAppIconPreview(app.icon || '📱');
+
+      document.getElementById('modalAddApp').classList.remove('hidden');
+    }
+
+    function populateCategoryDropdown(selectedId = null) {
+      const select = document.getElementById('selectAppCategory');
+      select.innerHTML = '';
+
+      state.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.name;
+        if (selectedId && cat.id === selectedId) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function updateAppIconPreview(val) {
+      const box = document.getElementById('appIconPreviewBox');
+      if (val && (val.startsWith('http://') || val.startsWith('https://'))) {
+        box.innerHTML = `<img src="${escapeHtml(val)}" class="w-full h-full object-cover">`;
+      } else {
+        box.textContent = val || '📱';
+      }
+    }
+
+    // -------------------------------------------------------------
+    // SETTINGS MODAL: CATEGORIES & SYNC
+    // -------------------------------------------------------------
+    function openSettingsModal(defaultTab = 'sync') {
+      // Sync form
+      document.getElementById('inputWorkerUrl').value = state.syncConfig.workerUrl || '';
+      document.getElementById('inputSyncKey').value = state.syncConfig.syncKey || '';
+      document.getElementById('chkAutoSync').checked = state.syncConfig.autoSync !== false;
+
+      renderSettingsCategoriesList();
+      switchSettingsTab(defaultTab);
+      document.getElementById('modalSettings').classList.remove('hidden');
+    }
+
+    function switchSettingsTab(tabName) {
+      const tabSync = document.getElementById('tabSettingsSync');
+      const tabCat = document.getElementById('tabSettingsCategories');
+      const tabBackup = document.getElementById('tabSettingsBackup');
+      const viewSync = document.getElementById('viewSettingsSync');
+      const viewCat = document.getElementById('viewSettingsCategories');
+      const viewBackup = document.getElementById('viewSettingsBackup');
+
+      [tabSync, tabCat, tabBackup].forEach(t => {
+        t.className = 'pb-2 font-medium border-b-2 border-transparent text-slate-500 hover:text-slate-800';
+      });
+      [viewSync, viewCat, viewBackup].forEach(v => v.classList.add('hidden'));
+
+      if (tabName === 'categories') {
+        tabCat.className = 'pb-2 font-semibold border-b-2 border-emerald-600 text-emerald-700';
+        viewCat.classList.remove('hidden');
+      } else if (tabName === 'backup') {
+        tabBackup.className = 'pb-2 font-semibold border-b-2 border-emerald-600 text-emerald-700';
+        viewBackup.classList.remove('hidden');
+      } else {
+        tabSync.className = 'pb-2 font-semibold border-b-2 border-emerald-600 text-emerald-700';
+        viewSync.classList.remove('hidden');
+      }
+    }
+
+    function renderSettingsCategoriesList() {
+      const container = document.getElementById('settingsCategoriesList');
+      container.innerHTML = '';
+
+      state.categories.forEach(cat => {
+        const item = document.createElement('div');
+        item.className = 'bg-slate-50 rounded-lg p-3 border border-slate-200 flex items-center justify-between gap-3';
+
+        const colorStyle = COLOR_MAP[cat.color] || COLOR_MAP.slate;
+        const appCount = state.apps.filter(a => a.categoryId === cat.id).length;
+
+        item.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="w-3 h-3 rounded-full ${colorStyle.bg} border-2 ${colorStyle.border}"></span>
+            <span class="font-bold text-slate-800 text-xs sm:text-sm">${escapeHtml(cat.name)}</span>
+            <span class="text-xs text-slate-400">(${appCount} apps)</span>
+          </div>
+
+          <button class="btn-delete-cat p-1 text-slate-400 hover:text-red-600 transition" title="Delete category">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        `;
+
+        item.querySelector('.btn-delete-cat').addEventListener('click', () => {
+          if (state.categories.length <= 1) {
+            showToast('You must have at least one category.', 'error');
+            return;
+          }
+          showConfirmDialog('Delete Category', `Delete category "${cat.name}"? Apps in this category will be moved to the first available category.`, () => {
+            deleteCategory(cat.id);
+          });
+        });
+
+        container.appendChild(item);
+      });
+    }
+
+    function deleteCategory(catId) {
+      state.categories = state.categories.filter(c => c.id !== catId);
+      const fallbackCat = state.categories[0];
+      // Reassign apps
+      state.apps.forEach(app => {
+        if (app.categoryId === catId) {
+          app.categoryId = fallbackCat ? fallbackCat.id : '';
+        }
+      });
+
+      saveStateToStorage();
+      renderSettingsCategoriesList();
+      renderDashboard();
+      showToast('Category deleted.', 'info');
+    }
+
+    // -------------------------------------------------------------
+    // TOAST & CONFIRMATION HELPERS
+    // -------------------------------------------------------------
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+
+      let colors = 'bg-slate-900 text-white border-slate-700';
+      if (type === 'success') colors = 'bg-emerald-600 text-white border-emerald-700';
+      if (type === 'error') colors = 'bg-red-600 text-white border-red-700';
+
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg border flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 ${colors}`;
+      toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function showConfirmDialog(title, message, onConfirm) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMessage').textContent = message;
+      pendingConfirmCallback = onConfirm;
+      document.getElementById('modalConfirm').classList.remove('hidden');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function copyTextToClipboard(text, successMsg = 'Copied to clipboard!') {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(successMsg, 'success');
+        }).catch(() => {
+          fallbackCopyText(text, successMsg);
+        });
+      } else {
+        fallbackCopyText(text, successMsg);
+      }
+    }
+
+    function fallbackCopyText(text, successMsg) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg, 'success');
+      } catch (err) {
+        showToast('Failed to copy', 'error');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    // -------------------------------------------------------------
+    // SAMPLE DATA GENERATOR
+    // -------------------------------------------------------------
+    function loadSampleApps() {
+      const today = new Date();
+      const sample1Date = new Date();
+      sample1Date.setDate(today.getDate() - 7); // 7 days ago
+      const sample2Date = new Date();
+      sample2Date.setDate(today.getDate() - 14); // 14 days ago (completed)
+
+      state.apps = [
+        {
+          id: 'app_sample_1',
+          name: 'FitPulse Daily Habit Tracker',
+          testingLink: 'https://play.google.com/apps/testing/com.fitpulse.habittracker',
+          icon: '🏋️',
+          categoryId: 'cat_health',
+          targetTesters: 12,
+          createdAt: new Date().toISOString(),
+          singleTesters: [
+            {
+              id: 't_s1',
+              name: 'Marcus Vance',
+              downloadDate: toISODate(sample1Date),
+              endingDate: calculateEndingDate(toISODate(sample1Date), 14),
+              usageLog: [true, true, true, true, true, true, true, false, false, false, false, false, false, false]
+            },
+            {
+              id: 't_s2',
+              name: 'Elena Rostova',
+              downloadDate: toISODate(sample2Date),
+              endingDate: calculateEndingDate(toISODate(sample2Date), 14),
+              usageLog: [true, true, true, true, true, true, true, true, true, true, true, true, true, true]
+            },
+            {
+              id: 't_s3',
+              name: 'Daniel Kim',
+              downloadDate: toISODate(sample1Date),
+              endingDate: calculateEndingDate(toISODate(sample1Date), 14),
+              usageLog: [true, false, true, true, false, true, true, false, false, false, false, false, false, false]
+            }
+          ],
+          commTesters: [
+            { id: 'c_1', name: 'u/AndroidTester42', dateJoined: toISODate(sample1Date), notes: 'Reddit Closed Testing exchange' },
+            { id: 'c_2', name: 'Samira_Dev', dateJoined: toISODate(sample1Date), notes: 'Discord Google Play group' },
+            { id: 'c_3', name: 'LucasM_88', dateJoined: toISODate(today), notes: 'Telegram Testers community' }
+          ]
+        },
+        {
+          id: 'app_sample_2',
+          name: 'SpendWise Budget & Expense AI',
+          testingLink: 'https://play.google.com/apps/testing/com.spendwise.finance',
+          icon: '💰',
+          categoryId: 'cat_finance',
+          targetTesters: 12,
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          singleTesters: [
+            {
+              id: 't_s4',
+              name: 'Sophia Patel',
+              downloadDate: toISODate(today),
+              endingDate: calculateEndingDate(toISODate(today), 14),
+              usageLog: [true, false, false, false, false, false, false, false, false, false, false, false, false, false]
+            }
+          ],
+          commTesters: [
+            { id: 'c_4', name: 'u/ClosedTesterHQ', dateJoined: toISODate(today), notes: 'Direct trade' }
+          ]
+        }
+      ];
+
+      saveStateToStorage();
+      renderDashboard();
+      showToast('Loaded sample apps with testers & usage logs!', 'success');
+    }
+
+    // -------------------------------------------------------------
+    // EVENT BINDINGS
+    // -------------------------------------------------------------
+    function initEventHandlers() {
+      // Search & Sort
+      document.getElementById('inputSearchApp').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value.trim();
+        renderDashboard();
+      });
+
+      document.getElementById('selectSortApps').addEventListener('change', (e) => {
+        state.sortBy = e.target.value;
+        renderDashboard();
+      });
+
+            // Setup Guide Modal Listeners
+      const btnGuide = document.getElementById('btnOpenGuide');
+      if (btnGuide) {
+        btnGuide.addEventListener('click', () => {
+          document.getElementById('modalGuide').classList.remove('hidden');
+        });
+      }
+      const btnCloseGuide = document.getElementById('btnCloseGuide');
+      if (btnCloseGuide) {
+        btnCloseGuide.addEventListener('click', () => {
+          document.getElementById('modalGuide').classList.add('hidden');
+        });
+      }
+      const btnCloseGuideBottom = document.getElementById('btnCloseGuideBottom');
+      if (btnCloseGuideBottom) {
+        btnCloseGuideBottom.addEventListener('click', () => {
+          document.getElementById('modalGuide').classList.add('hidden');
+        });
+      }
+
+            // Nav to Testing Others page
+      const btnNavOthers = document.getElementById('btnNavTestingOthers');
+      if (btnNavOthers) {
+        btnNavOthers.addEventListener('click', () => {
+          window.location.href = 'testing_others.html';
+        });
+      }
+
+      // Header Buttons
+      document.getElementById('btnOpenAddApp').addEventListener('click', openAddAppModal);
+      document.getElementById('btnEmptyAddApp').addEventListener('click', openAddAppModal);
+      document.getElementById('btnEmptySampleData').addEventListener('click', loadSampleApps);
+      document.getElementById('btnLoadSampleData').addEventListener('click', loadSampleApps);
+
+      document.getElementById('btnOpenSettings').addEventListener('click', () => openSettingsModal('sync'));
+      document.getElementById('btnSyncStatus').addEventListener('click', () => openSettingsModal('sync'));
+      document.getElementById('btnQuickConfigCategories').addEventListener('click', () => {
+        document.getElementById('modalAddApp').classList.add('hidden');
+        openSettingsModal('categories');
+      });
+
+      document.getElementById('btnQuickSync').addEventListener('click', () => {
+        if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) {
+          openSettingsModal('sync');
+        } else {
+          pushDataToCloudflare(true);
+        }
+      });
+
+      // Single Tester Download Date Change -> Auto calculate ending preview
+      document.getElementById('inputSingleDownloadDate').addEventListener('input', (e) => {
+        updateCalculatedEndingPreview(e.target.value);
+      });
+
+      // Icon Preset Buttons in Add App Modal
+      document.querySelectorAll('.icon-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const icon = btn.getAttribute('data-icon');
+          document.getElementById('inputAppIconUrl').value = icon;
+          updateAppIconPreview(icon);
+        });
+      });
+
+      document.getElementById('inputAppIconUrl').addEventListener('input', (e) => {
+        updateAppIconPreview(e.target.value);
+      });
+
+      // App Save Form Submit
+      document.getElementById('formAppSave').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('inputAppEditId').value;
+        const name = document.getElementById('inputAppName').value.trim();
+        const testingLink = document.getElementById('inputAppTestingLink').value.trim();
+        const categoryId = document.getElementById('selectAppCategory').value;
+        const icon = document.getElementById('inputAppIconUrl').value.trim() || '📱';
+        const targetTesters = parseInt(document.getElementById('inputAppTargetTesters').value, 10) || 12;
+
+        if (editId) {
+          // Update
+          const app = state.apps.find(a => a.id === editId);
+          if (app) {
+            app.name = name;
+            app.testingLink = testingLink;
+            app.categoryId = categoryId;
+            app.icon = icon;
+            app.targetTesters = targetTesters;
+          }
+          showToast('App updated successfully!', 'success');
+        } else {
+          // Create
+          const newApp = {
+            id: 'app_' + Date.now(),
+            name,
+            testingLink,
+            categoryId,
+            icon,
+            targetTesters,
+            createdAt: new Date().toISOString(),
+            singleTesters: [],
+            commTesters: []
+          };
+          state.apps.unshift(newApp);
+          showToast('New app added!', 'success');
+        }
+
+        saveStateToStorage();
+        renderDashboard();
+        document.getElementById('modalAddApp').classList.add('hidden');
+      });
+
+      document.getElementById('btnCloseAddApp').addEventListener('click', () => {
+        document.getElementById('modalAddApp').classList.add('hidden');
+      });
+      document.getElementById('btnCancelAppSave').addEventListener('click', () => {
+        document.getElementById('modalAddApp').classList.add('hidden');
+      });
+
+      // App Detail Modal Event Listeners
+      document.getElementById('btnCloseAppDetail').addEventListener('click', () => {
+        document.getElementById('modalAppDetail').classList.add('hidden');
+      });
+      document.getElementById('btnDoneAppDetail').addEventListener('click', () => {
+        document.getElementById('modalAppDetail').classList.add('hidden');
+      });
+
+      document.getElementById('tabBtnSingle').addEventListener('click', () => switchTesterTab('single'));
+      document.getElementById('tabBtnCommunity').addEventListener('click', () => switchTesterTab('community'));
+
+      document.getElementById('btnCopyTestingLink').addEventListener('click', () => {
+        const app = state.apps.find(a => a.id === state.activeAppId);
+        if (app) copyTextToClipboard(app.testingLink, 'Testing link copied!');
+      });
+
+      document.getElementById('btnDeleteCurrentApp').addEventListener('click', () => {
+        const app = state.apps.find(a => a.id === state.activeAppId);
+        if (!app) return;
+        showConfirmDialog('Delete App', `Are you sure you want to permanently delete "${app.name}" and all its testers?`, () => {
+          state.apps = state.apps.filter(a => a.id !== app.id);
+          saveStateToStorage();
+          document.getElementById('modalAppDetail').classList.add('hidden');
+          renderDashboard();
+          showToast('App deleted.', 'info');
+        });
+      });
+
+      // Add Single Tester Form Submit
+      document.getElementById('formAddSingleTester').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const app = state.apps.find(a => a.id === state.activeAppId);
+        if (!app) return;
+
+        const name = document.getElementById('inputSingleTesterName').value.trim();
+        const downloadDate = document.getElementById('inputSingleDownloadDate').value;
+        const endingDate = calculateEndingDate(downloadDate, 14);
+
+        if (!app.singleTesters) app.singleTesters = [];
+        app.singleTesters.unshift({
+          id: 'st_' + Date.now(),
+          name,
+          downloadDate,
+          endingDate,
+          usageLog: new Array(14).fill(false)
+        });
+
+        // Reset inputs
+        document.getElementById('inputSingleTesterName').value = '';
+
+        saveStateToStorage();
+        renderAppDetailContent();
+        renderDashboard();
+        showToast(`Added ${name} (14 days calculated: ends ${endingDate})`, 'success');
+      });
+
+      // Add Community Tester Form Submit
+      document.getElementById('formAddCommunityTester').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const app = state.apps.find(a => a.id === state.activeAppId);
+        if (!app) return;
+
+        const name = document.getElementById('inputCommTesterName').value.trim();
+        const dateJoined = document.getElementById('inputCommJoinDate').value;
+        const notes = document.getElementById('inputCommNotes').value.trim();
+
+        if (!app.commTesters) app.commTesters = [];
+        app.commTesters.unshift({
+          id: 'ct_' + Date.now(),
+          name,
+          dateJoined,
+          notes
+        });
+
+        document.getElementById('inputCommTesterName').value = '';
+        document.getElementById('inputCommNotes').value = '';
+
+        saveStateToStorage();
+        renderAppDetailContent();
+        renderDashboard();
+        showToast(`Added community tester ${name}!`, 'success');
+      });
+
+      // Settings Modal Tabs
+      document.getElementById('tabSettingsSync').addEventListener('click', () => switchSettingsTab('sync'));
+      document.getElementById('tabSettingsCategories').addEventListener('click', () => switchSettingsTab('categories'));
+      document.getElementById('tabSettingsBackup').addEventListener('click', () => switchSettingsTab('backup'));
+
+      document.getElementById('btnCloseSettings').addEventListener('click', () => {
+        document.getElementById('modalSettings').classList.add('hidden');
+      });
+      document.getElementById('btnCloseSettingsBottom').addEventListener('click', () => {
+        document.getElementById('modalSettings').classList.add('hidden');
+      });
+
+      // Settings: Cloudflare Save
+      document.getElementById('formCloudflareSync').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let workerUrl = document.getElementById('inputWorkerUrl').value.trim();
+        const syncKey = document.getElementById('inputSyncKey').value.trim();
+        const autoSync = document.getElementById('chkAutoSync').checked;
+
+        if (workerUrl && !workerUrl.startsWith('http://') && !workerUrl.startsWith('https://')) {
+          workerUrl = 'https://' + workerUrl;
+          document.getElementById('inputWorkerUrl').value = workerUrl;
+        }
+
+        state.syncConfig.workerUrl = workerUrl;
+        state.syncConfig.syncKey = syncKey;
+        state.syncConfig.autoSync = autoSync;
+        saveConfigToStorage();
+        updateSyncBadgeUI();
+        showToast('Sync settings saved!', 'success');
+
+        if (workerUrl && syncKey) {
+          pushDataToCloudflare(true);
+        }
+      });
+
+      document.getElementById('btnGenSettingsKey').addEventListener('click', () => {
+        const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+        let key = 'sync-';
+        for (let i = 0; i < 12; i++) {
+          key += chars[Math.floor(Math.random() * chars.length)];
+        }
+        document.getElementById('inputSyncKey').value = key;
+      });
+
+      // Settings: Test Worker Connection
+      document.getElementById('btnTestWorkerConnection').addEventListener('click', async () => {
+        const resBox = document.getElementById('syncTestResult');
+        resBox.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-emerald-50', 'text-emerald-700');
+        resBox.textContent = 'Pinging Cloudflare Worker...';
+
+        let workerUrl = document.getElementById('inputWorkerUrl').value.trim();
+        if (!workerUrl) {
+          resBox.classList.add('bg-red-50', 'text-red-700');
+          resBox.textContent = 'Please enter a Worker URL first.';
+          return;
+        }
+
+        if (!workerUrl.startsWith('http://') && !workerUrl.startsWith('https://')) {
+          workerUrl = 'https://' + workerUrl;
+          document.getElementById('inputWorkerUrl').value = workerUrl;
+        }
+
+        try {
+          const testEndpoint = workerUrl.replace(/\/+$/, '') + '/api/health';
+          const resp = await fetch(testEndpoint);
+          if (resp.ok) {
+            const data = await resp.json();
+            resBox.classList.add('bg-emerald-50', 'text-emerald-700');
+            resBox.textContent = '✓ Connected to Cloudflare Worker:\n' + JSON.stringify(data, null, 2);
+          } else {
+            resBox.classList.add('bg-red-50', 'text-red-700');
+            resBox.textContent = `Error: Worker returned status ${resp.status}`;
+          }
+        } catch (err) {
+          resBox.classList.add('bg-red-50', 'text-red-700');
+          resBox.textContent = 'Connection failed: ' + err.message;
+        }
+      });
+
+      document.getElementById('btnPullFromCloud').addEventListener('click', () => {
+        pullDataFromCloudflare(true);
+      });
+
+      // Settings: Add Category Form
+      document.getElementById('formAddCategory').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('inputNewCatName').value.trim();
+        const color = document.getElementById('selectNewCatColor').value;
+        if (!name) return;
+
+        const newCat = {
+          id: 'cat_' + Date.now(),
+          name,
+          color
+        };
+        state.categories.push(newCat);
+        document.getElementById('inputNewCatName').value = '';
+
+        saveStateToStorage();
+        renderSettingsCategoriesList();
+        renderDashboard();
+        showToast(`Added category "${name}"!`, 'success');
+      });
+
+      // Settings: Export JSON
+      document.getElementById('btnExportJson').addEventListener('click', () => {
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify({
+          apps: state.apps,
+          categories: state.categories,
+          exportedAt: new Date().toISOString()
+        }, null, 2));
+        const dlAnchor = document.createElement('a');
+        dlAnchor.setAttribute('href', dataStr);
+        dlAnchor.setAttribute('download', `google_play_testers_backup_${toISODate(new Date())}.json`);
+        dlAnchor.click();
+        showToast('Exported backup file.', 'success');
+      });
+
+      // Settings: Import JSON
+      document.getElementById('inputImportJson').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const parsed = JSON.parse(event.target.result);
+            if (Array.isArray(parsed.apps)) state.apps = parsed.apps;
+            if (Array.isArray(parsed.categories)) state.categories = parsed.categories;
+            saveStateToStorage();
+            renderDashboard();
+            renderSettingsCategoriesList();
+            showToast('Data imported successfully!', 'success');
+          } catch (err) {
+            showToast('Failed to parse JSON file.', 'error');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Settings: Clear All Data
+      document.getElementById('btnClearAllData').addEventListener('click', () => {
+        showConfirmDialog('Reset All Data', 'Are you sure you want to erase all apps, categories, and logs from this device? This cannot be undone.', () => {
+          state.apps = [];
+          state.categories = [...DEFAULT_CATEGORIES];
+          saveStateToStorage(true);
+          renderDashboard();
+          renderSettingsCategoriesList();
+          showToast('All local data cleared.', 'info');
+        });
+      });
+
+      // Confirm Modal buttons
+      document.getElementById('btnConfirmCancel').addEventListener('click', () => {
+        document.getElementById('modalConfirm').classList.add('hidden');
+        pendingConfirmCallback = null;
+      });
+      document.getElementById('btnConfirmOk').addEventListener('click', () => {
+        document.getElementById('modalConfirm').classList.add('hidden');
+        if (typeof pendingConfirmCallback === 'function') {
+          pendingConfirmCallback();
+          pendingConfirmCallback = null;
+        }
+      });
+    }
+
+    // -------------------------------------------------------------
+    // INITIALIZATION
+    // -------------------------------------------------------------
+    function init() {
+      loadStateFromStorage();
+      initEventHandlers();
+      updateSyncBadgeUI();
+      renderDashboard();
+
+      // If user has Cloudflare config, attempt initial background pull
+      if (state.syncConfig.workerUrl && state.syncConfig.syncKey) {
+        pullDataFromCloudflare(false);
+      } else if (state.apps.length === 0) {
+        // Pre-load sample data on first visit so user immediately sees how it looks!
+        loadSampleApps();
+      }
+    }
+
+    // Start on DOM ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>

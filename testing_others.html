@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testing Other People's Apps - Mazen &amp; Marwan</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .interval-card { transition: all 0.2s ease; }
+    .interval-card:hover { transform: translateY(-1px); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <!-- Brand & Page Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-sm font-extrabold text-base tracking-tight">
+          👥
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Testing Other People's Apps</h1>
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              Mazen &amp; Marwan
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 hidden sm:block">Track 3d, 7d &amp; 12d testing intervals &bull; 14d Mandatory &amp; 16d Buffer</p>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Switch to My Apps (12-Tester) -->
+        <button id="btnNavMyApps" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-emerald-700 transition" title="Go to My 12-Tester Apps Dashboard">
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+          <span class="hidden sm:inline">My Apps</span> (12 Testers)
+        </button>
+
+        <!-- Cloudflare Sync Status Pill -->
+        <button id="btnSyncStatus" type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" title="Click to open Cloudflare sync settings">
+          <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+          <span id="syncStatusText" class="hidden md:inline">Local Only</span>
+          <svg id="syncIconSpin" class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+
+        <!-- Quick Sync Button -->
+        <button id="btnQuickSync" type="button" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 transition" title="Sync with Cloudflare now">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="btnOpenSettings" type="button" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-slate-200 transition" title="Open Settings">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+
+        <!-- Add App Button -->
+        <button id="btnOpenAddPeerApp" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm shadow-indigo-600/20 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span>Add App to Test</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
+
+    <!-- Metrics Cards Banner -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Apps Testing</p>
+          <p id="statTotalPeerApps" class="text-2xl font-extrabold text-slate-900 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-blue-600 uppercase tracking-wider font-semibold">Mazen's Tests</p>
+          <p id="statMazenCount" class="text-2xl font-extrabold text-blue-700 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+          M
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-purple-600 uppercase tracking-wider font-semibold">Marwan's Tests</p>
+          <p id="statMarwanCount" class="text-2xl font-extrabold text-purple-700 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+          W
+        </div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between" id="statOverdueContainer">
+        <div>
+          <p class="text-xs font-medium text-red-600 uppercase tracking-wider font-semibold">Overdue Tests</p>
+          <p id="statOverdueCount" class="text-2xl font-extrabold text-red-600 mt-0.5">0</p>
+        </div>
+        <div class="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Search Input -->
+        <div class="relative flex-1 max-w-md">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="inputSearchPeerApp" placeholder="Search apps by name..." class="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <!-- Sort Select -->
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-500 whitespace-nowrap">Sort by:</label>
+          <select id="selectSortPeerApps" class="text-xs sm:text-sm border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            <option value="ending_asc">Closest End Date (14d)</option>
+            <option value="overdue_first">Overdue Tests First</option>
+            <option value="recent">Recently Added</option>
+            <option value="name_asc">App Name (A-Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- User Filter Tabs (All / Mazen / Marwan / Overdue) -->
+      <div class="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1" id="testerFilterBar">
+        <button id="filterBtnAll" type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-slate-900 text-white shadow-xs">
+          All Apps (<span id="countFilterAll">0</span>)
+        </button>
+        <button id="filterBtnMazen" type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 flex items-center gap-1.5">
+          <span>👤 Mazen</span> <span class="text-[10px] opacity-80" id="countFilterMazen">(0)</span>
+        </button>
+        <button id="filterBtnMarwan" type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 flex items-center gap-1.5">
+          <span>👤 Marwan</span> <span class="text-[10px] opacity-80" id="countFilterMarwan">(0)</span>
+        </button>
+        <button id="filterBtnOverdue" type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 flex items-center gap-1.5">
+          <span>⚠️ Overdue Only</span> <span class="text-[10px] opacity-80" id="countFilterOverdue">(0)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Peer App Cards Grid -->
+    <div id="peerAppsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <!-- Dynamically populated app cards -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyPeerState" class="hidden bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center max-w-lg mx-auto">
+      <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+        👥
+      </div>
+      <h3 class="text-base font-bold text-slate-900">No Apps Found</h3>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-sm mx-auto">
+        Add an app you're testing for another developer, select whether Mazen or Marwan is testing, and track your 3d, 7d, and 12d check-ins.
+      </p>
+      <div class="mt-5 flex items-center justify-center gap-3">
+        <button id="btnEmptyAddPeerApp" type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+          + Add First App
+        </button>
+        <button id="btnEmptySamplePeerData" type="button" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition">
+          Load Sample Tests
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: ADD APP FOR TESTING -->
+  <div id="modalAddPeerApp" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <span>Add App for Testing</span>
+        </h3>
+        <button id="btnCloseAddPeerApp" type="button" class="text-slate-400 hover:text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="formAddPeerApp" class="p-6 space-y-4">
+        <!-- App Name -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">App Name *</label>
+          <input type="text" id="inputPeerAppName" required placeholder="e.g. BudgetIQ Expense Manager" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <!-- Which User is Testing? -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Who is testing this app? *</label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50 has-[:checked]:ring-2 has-[:checked]:ring-blue-500/20">
+              <input type="radio" name="radioTester" value="Mazen" checked class="text-blue-600 focus:ring-blue-500">
+              <div>
+                <span class="block text-xs font-bold text-slate-900">Mazen</span>
+                <span class="block text-[11px] text-slate-500">Device 1</span>
+              </div>
+            </label>
+
+            <label class="flex items-center gap-2.5 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-slate-50 transition has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50/50 has-[:checked]:ring-2 has-[:checked]:ring-purple-500/20">
+              <input type="radio" name="radioTester" value="Marwan" class="text-purple-600 focus:ring-purple-500">
+              <div>
+                <span class="block text-xs font-bold text-slate-900">Marwan</span>
+                <span class="block text-[11px] text-slate-500">Device 2</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Start Date -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Testing Start Date *</label>
+          <input type="date" id="inputPeerStartDate" required class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <!-- Auto-Calculated Ending Dates & Intervals Preview -->
+        <div class="bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 space-y-2 text-xs">
+          <div class="font-bold text-indigo-950 flex items-center justify-between">
+            <span>Auto-Calculated Schedule</span>
+            <span class="text-[11px] font-normal text-indigo-700">Google Play Compliance</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-1 border-t border-indigo-200/60">
+            <div>
+              <span class="text-slate-500 block text-[10px] uppercase font-semibold">Mandatory (14 Days)</span>
+              <strong id="previewMandatoryEnd" class="text-emerald-700 font-bold">Today + 14d</strong>
+            </div>
+            <div>
+              <span class="text-slate-500 block text-[10px] uppercase font-semibold">Buffer (16 Days)</span>
+              <strong id="previewBufferEnd" class="text-indigo-700 font-bold">Today + 16d</strong>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-indigo-200/60 text-[11px] text-indigo-900 space-y-1">
+            <span class="font-semibold block text-slate-700">Testing Intervals:</span>
+            <div class="flex items-center justify-between text-slate-600">
+              <span>Day 3 Test:</span> <strong id="previewDay3Date" class="text-slate-800">Date</strong>
+            </div>
+            <div class="flex items-center justify-between text-slate-600">
+              <span>Day 7 Test:</span> <strong id="previewDay7Date" class="text-slate-800">Date</strong>
+            </div>
+            <div class="flex items-center justify-between text-slate-600">
+              <span>Day 12 Test:</span> <strong id="previewDay12Date" class="text-slate-800">Date</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Optional Testing Link / Notes -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Play Store Testing Link / Package (Optional)</label>
+          <input type="url" id="inputPeerTestingLink" placeholder="https://play.google.com/apps/testing/..." class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Notes / Developer Contact (Optional)</label>
+          <input type="text" id="inputPeerNotes" placeholder="e.g. Reddit u/ExampleDev, reciprocal tester trade" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+        </div>
+
+        <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+          <button id="btnCancelAddPeerApp" type="button" class="px-4 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+            Add App to Track
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS (Cloudflare Sync) -->
+  <div id="modalSettings" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+      <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <span>Cross-Device Cloudflare Sync</span>
+        </h3>
+        <button id="btnCloseSettings" type="button" class="text-slate-400 hover:text-slate-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="p-6 overflow-y-auto flex-1 space-y-4">
+        <div class="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4 text-xs text-indigo-900 leading-relaxed">
+          Syncs both Mazen's and Marwan's testing records across all devices using your Cloudflare Worker.
+        </div>
+
+        <form id="formSyncSettings" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Cloudflare Worker URL</label>
+            <input type="url" id="inputWorkerUrl" placeholder="https://play-tester-sync.yoursubdomain.workers.dev" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Sync Passkey</label>
+            <input type="text" id="inputSyncKey" placeholder="e.g. dev-passkey-491a" class="w-full text-xs sm:text-sm px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="chkAutoSync" checked class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
+            <label for="chkAutoSync" class="text-xs text-slate-700 font-medium">Auto-sync on changes</label>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+              Save Sync Settings
+            </button>
+            <button type="button" id="btnPullFromCloud" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition">
+              Pull from Cloud
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-end">
+        <button id="btnCloseSettingsBottom" type="button" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-semibold rounded-lg transition">
+          Close Settings
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- IN-PAGE CONFIRMATION MODAL -->
+  <div id="modalConfirm" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 border border-slate-200 space-y-4">
+      <h4 id="confirmModalTitle" class="text-sm font-bold text-slate-900">Confirm Action</h4>
+      <p id="confirmModalMessage" class="text-xs text-slate-600">Are you sure you want to proceed?</p>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="btnConfirmCancel" type="button" class="px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">Cancel</button>
+        <button id="btnConfirmOk" type="button" class="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded-lg transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+  (function() {
+    'use strict';
+
+    const STORAGE_KEY_PEER = 'gp_peer_testing_data';
+    const STORAGE_KEY_CONFIG = 'gp_tester_sync_config';
+
+    let state = {
+      peerApps: [],
+      filterUser: 'all', // 'all', 'Mazen', 'Marwan', 'overdue'
+      searchQuery: '',
+      sortBy: 'ending_asc',
+      syncConfig: {
+        workerUrl: '',
+        syncKey: '',
+        autoSync: true,
+        lastSync: null
+      },
+      syncStatus: 'idle'
+    };
+
+    let debounceTimer = null;
+    let pendingConfirmCallback = null;
+
+    // -------------------------------------------------------------
+    // DATE HELPERS
+    // -------------------------------------------------------------
+    function toISODate(dateObj) {
+      return dateObj.toISOString().split('T')[0];
+    }
+
+    function addDays(isoDateStr, days) {
+      if (!isoDateStr) return '';
+      const d = new Date(isoDateStr);
+      d.setDate(d.getDate() + days);
+      return toISODate(d);
+    }
+
+    function getDaysDifference(targetIsoDateStr) {
+      if (!targetIsoDateStr) return 0;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(targetIsoDateStr);
+      target.setHours(0, 0, 0, 0);
+      const diff = target.getTime() - today.getTime();
+      return Math.round(diff / (1000 * 60 * 60 * 24));
+    }
+
+    function getDaysElapsed(startIsoDateStr) {
+      if (!startIsoDateStr) return 0;
+      const start = new Date(startIsoDateStr);
+      start.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const diff = today.getTime() - start.getTime();
+      return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
+    }
+
+    function isDateInPast(isoDateStr) {
+      if (!isoDateStr) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const target = new Date(isoDateStr);
+      target.setHours(0, 0, 0, 0);
+      return today.getTime() > target.getTime();
+    }
+
+    function formatDisplayDate(isoDateStr) {
+      if (!isoDateStr) return '';
+      const d = new Date(isoDateStr);
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // -------------------------------------------------------------
+    // OVERDUE & INTERVAL LOGIC
+    // -------------------------------------------------------------
+    function checkAppOverdueStatus(app) {
+      const day3Date = addDays(app.startDate, 3);
+      const day7Date = addDays(app.startDate, 7);
+      const day12Date = addDays(app.startDate, 12);
+
+      const d3Missed = isDateInPast(day3Date) && !app.intervalDay3?.completed;
+      const d7Missed = isDateInPast(day7Date) && !app.intervalDay7?.completed;
+      const d12Missed = isDateInPast(day12Date) && !app.intervalDay12?.completed;
+
+      return {
+        isOverdue: d3Missed || d7Missed || d12Missed,
+        d3Missed,
+        d7Missed,
+        d12Missed,
+        day3Date,
+        day7Date,
+        day12Date
+      };
+    }
+
+    // -------------------------------------------------------------
+    // STORAGE & SYNC
+    // -------------------------------------------------------------
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY_PEER);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) state.peerApps = parsed;
+        }
+      } catch (e) {
+        console.error('Error loading peer apps', e);
+      }
+
+      try {
+        const rawConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
+        if (rawConfig) {
+          state.syncConfig = { ...state.syncConfig, ...JSON.parse(rawConfig) };
+        }
+      } catch (e) {
+        console.error('Error loading sync config', e);
+      }
+    }
+
+    function saveData(triggerSync = true) {
+      try {
+        localStorage.setItem(STORAGE_KEY_PEER, JSON.stringify(state.peerApps));
+      } catch (e) {
+        console.error('Error saving peer apps to localStorage', e);
+      }
+
+      if (triggerSync && state.syncConfig.autoSync && state.syncConfig.workerUrl && state.syncConfig.syncKey) {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          pushToCloudflare();
+        }, 1200);
+      }
+    }
+
+    function updateSyncUI() {
+      const dot = document.getElementById('syncIndicatorDot');
+      const text = document.getElementById('syncStatusText');
+      const icon = document.getElementById('syncIconSpin');
+
+      if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) {
+        dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+        text.textContent = 'Local Only';
+        icon.classList.remove('animate-spin');
+        return;
+      }
+
+      if (state.syncStatus === 'syncing') {
+        dot.className = 'w-2 h-2 rounded-full bg-blue-500 animate-pulse';
+        text.textContent = 'Syncing...';
+        icon.classList.add('animate-spin');
+      } else if (state.syncStatus === 'error') {
+        dot.className = 'w-2 h-2 rounded-full bg-red-500';
+        text.textContent = 'Sync Error';
+        icon.classList.remove('animate-spin');
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+        if (state.syncConfig.lastSync) {
+          const d = new Date(state.syncConfig.lastSync);
+          text.textContent = 'Synced ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } else {
+          text.textContent = 'Connected';
+        }
+        icon.classList.remove('animate-spin');
+      }
+    }
+
+    async function pushToCloudflare(showNotification = false) {
+      if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) return;
+      state.syncStatus = 'syncing';
+      updateSyncUI();
+
+      const url = state.syncConfig.workerUrl.trim().replace(/\/+$/, '') + '/api/sync';
+      try {
+        const payload = {
+          peerApps: state.peerApps,
+          updatedAt: new Date().toISOString()
+        };
+
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-sync-key': state.syncConfig.syncKey.trim()
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) throw new Error(`Worker returned ${resp.status}`);
+
+        state.syncStatus = 'success';
+        state.syncConfig.lastSync = new Date().toISOString();
+        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+        updateSyncUI();
+
+        if (showNotification) showToast('Synced testing data to Cloudflare!', 'success');
+      } catch (err) {
+        state.syncStatus = 'error';
+        updateSyncUI();
+        if (showNotification) showToast('Sync failed: ' + err.message, 'error');
+      }
+    }
+
+    async function pullFromCloudflare(showNotification = true) {
+      if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) {
+        showToast('Set Cloudflare Worker URL & Key in Settings first.', 'info');
+        return;
+      }
+      state.syncStatus = 'syncing';
+      updateSyncUI();
+
+      const url = state.syncConfig.workerUrl.trim().replace(/\/+$/, '') + '/api/sync';
+      try {
+        const resp = await fetch(url, {
+          method: 'GET',
+          headers: { 'x-sync-key': state.syncConfig.syncKey.trim() }
+        });
+
+        if (!resp.ok) throw new Error(`Worker returned ${resp.status}`);
+        const json = await resp.json();
+
+        if (json.success && json.data && Array.isArray(json.data.peerApps)) {
+          state.peerApps = json.data.peerApps;
+          saveData(false);
+          render();
+          state.syncStatus = 'success';
+          state.syncConfig.lastSync = new Date().toISOString();
+          localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+          updateSyncUI();
+          if (showNotification) showToast(`Pulled ${state.peerApps.length} testing apps from Cloudflare!`, 'success');
+        } else {
+          state.syncStatus = 'success';
+          updateSyncUI();
+          if (showNotification) {
+            showToast('No remote testing records found yet. Pushing local...', 'info');
+            pushToCloudflare(true);
+          }
+        }
+      } catch (err) {
+        state.syncStatus = 'error';
+        updateSyncUI();
+        if (showNotification) showToast('Pull failed: ' + err.message, 'error');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // RENDERING
+    // -------------------------------------------------------------
+    function renderStats() {
+      const total = state.peerApps.length;
+      const mazenCount = state.peerApps.filter(a => a.tester === 'Mazen').length;
+      const marwanCount = state.peerApps.filter(a => a.tester === 'Marwan').length;
+
+      let overdueCount = 0;
+      state.peerApps.forEach(app => {
+        const status = checkAppOverdueStatus(app);
+        if (status.isOverdue) overdueCount++;
+      });
+
+      document.getElementById('statTotalPeerApps').textContent = total;
+      document.getElementById('statMazenCount').textContent = mazenCount;
+      document.getElementById('statMarwanCount').textContent = marwanCount;
+      document.getElementById('statOverdueCount').textContent = overdueCount;
+
+      document.getElementById('countFilterAll').textContent = total;
+      document.getElementById('countFilterMazen').textContent = `(${mazenCount})`;
+      document.getElementById('countFilterMarwan').textContent = `(${marwanCount})`;
+      document.getElementById('countFilterOverdue').textContent = `(${overdueCount})`;
+
+      const overdueBox = document.getElementById('statOverdueContainer');
+      if (overdueCount > 0) {
+        overdueBox.className = 'bg-red-50/80 p-4 rounded-xl border border-red-200 shadow-xs flex items-center justify-between';
+      } else {
+        overdueBox.className = 'bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between';
+      }
+    }
+
+    function renderFilterButtons() {
+      const btnAll = document.getElementById('filterBtnAll');
+      const btnMazen = document.getElementById('filterBtnMazen');
+      const btnMarwan = document.getElementById('filterBtnMarwan');
+      const btnOverdue = document.getElementById('filterBtnOverdue');
+
+      [btnAll, btnMazen, btnMarwan, btnOverdue].forEach(b => {
+        b.className = 'px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-slate-100 text-slate-600 hover:bg-slate-200';
+      });
+
+      if (state.filterUser === 'Mazen') {
+        btnMazen.className = 'px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-blue-600 text-white shadow-xs';
+      } else if (state.filterUser === 'Marwan') {
+        btnMarwan.className = 'px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-purple-600 text-white shadow-xs';
+      } else if (state.filterUser === 'overdue') {
+        btnOverdue.className = 'px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-red-600 text-white shadow-xs';
+      } else {
+        btnAll.className = 'px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-slate-900 text-white shadow-xs';
+      }
+    }
+
+    function render() {
+      renderStats();
+      renderFilterButtons();
+
+      const grid = document.getElementById('peerAppsGrid');
+      const emptyBox = document.getElementById('emptyPeerState');
+      grid.innerHTML = '';
+
+      let filtered = state.peerApps.filter(app => {
+        if (state.filterUser === 'Mazen' && app.tester !== 'Mazen') return false;
+        if (state.filterUser === 'Marwan' && app.tester !== 'Marwan') return false;
+        if (state.filterUser === 'overdue') {
+          const status = checkAppOverdueStatus(app);
+          if (!status.isOverdue) return false;
+        }
+
+        if (state.searchQuery) {
+          const q = state.searchQuery.toLowerCase();
+          const matchesName = (app.name || '').toLowerCase().includes(q);
+          const matchesNotes = (app.notes || '').toLowerCase().includes(q);
+          if (!matchesName && !matchesNotes) return false;
+        }
+
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        if (state.sortBy === 'overdue_first') {
+          const overA = checkAppOverdueStatus(a).isOverdue ? 1 : 0;
+          const overB = checkAppOverdueStatus(b).isOverdue ? 1 : 0;
+          if (overA !== overB) return overB - overA;
+        }
+
+        if (state.sortBy === 'ending_asc') {
+          const endA = addDays(a.startDate, 14);
+          const endB = addDays(b.startDate, 14);
+          return endA.localeCompare(endB);
+        } else if (state.sortBy === 'name_asc') {
+          return (a.name || '').localeCompare(b.name || '');
+        } else {
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        }
+      });
+
+      if (filtered.length === 0) {
+        grid.classList.add('hidden');
+        emptyBox.classList.remove('hidden');
+        return;
+      }
+
+      grid.classList.remove('hidden');
+      emptyBox.classList.add('hidden');
+
+      filtered.forEach(app => {
+        const card = createPeerAppCard(app);
+        grid.appendChild(card);
+      });
+    }
+
+    function createPeerAppCard(app) {
+      const card = document.createElement('div');
+      const status = checkAppOverdueStatus(app);
+
+      const borderClass = status.isOverdue
+        ? 'border-2 border-red-500 bg-white ring-2 ring-red-500/10'
+        : 'border border-slate-200 bg-white';
+
+      card.className = `${borderClass} rounded-2xl shadow-xs hover:shadow-md transition flex flex-col overflow-hidden`;
+
+      const mandatoryEnd = addDays(app.startDate, 14);
+      const bufferEnd = addDays(app.startDate, 16);
+      const daysElapsed = getDaysElapsed(app.startDate);
+      const daysLeftMandatory = getDaysDifference(mandatoryEnd);
+      const daysLeftBuffer = getDaysDifference(bufferEnd);
+
+      const isMandatoryDone = daysElapsed >= 14;
+      const isBufferDone = daysElapsed >= 16;
+
+      let testerBadge = '';
+      if (app.tester === 'Mazen') {
+        testerBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200">
+          <span>👤 Mazen</span>
+        </span>`;
+      } else {
+        testerBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-50 text-purple-700 border border-purple-200">
+          <span>👤 Marwan</span>
+        </span>`;
+      }
+
+      let statusTag = '';
+      if (status.isOverdue) {
+        statusTag = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-red-600 text-white shadow-xs animate-pulse">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Test overdue
+        </span>`;
+      } else if (isBufferDone) {
+        statusTag = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+          ✓ 16d Buffer Complete
+        </span>`;
+      } else if (isMandatoryDone) {
+        statusTag = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 border border-teal-300">
+          ✓ 14d Mandatory Met
+        </span>`;
+      } else {
+        statusTag = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+          Day ${daysElapsed + 1} of 14
+        </span>`;
+      }
+
+      function getIntervalPill(dayNum, targetDate, isChecked, isMissed) {
+        let stateStyle = 'bg-slate-50 border-slate-200 text-slate-600';
+        let statusText = 'Pending';
+        let btnIcon = '○';
+
+        if (isChecked) {
+          stateStyle = 'bg-emerald-50 border-emerald-300 text-emerald-800 font-bold';
+          statusText = '✓ Tested';
+          btnIcon = '✓';
+        } else if (isMissed) {
+          stateStyle = 'bg-red-50 border-red-300 text-red-700 font-bold ring-1 ring-red-400';
+          statusText = '⚠️ Overdue!';
+          btnIcon = '!';
+        } else {
+          statusText = formatDisplayDate(targetDate);
+        }
+
+        return `
+          <div class="interval-card flex-1 p-2.5 rounded-xl border ${stateStyle} flex flex-col justify-between cursor-pointer transition select-none btn-toggle-interval" data-interval="${dayNum}" title="Click to mark Day ${dayNum} test done/undone">
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-bold">Day ${dayNum}</span>
+              <span class="text-xs">${btnIcon}</span>
+            </div>
+            <div class="text-[10px] mt-1 truncate">
+              ${statusText}
+            </div>
+          </div>
+        `;
+      }
+
+      const d3Html = getIntervalPill(3, status.day3Date, !!app.intervalDay3?.completed, status.d3Missed);
+      const d7Html = getIntervalPill(7, status.day7Date, !!app.intervalDay7?.completed, status.d7Missed);
+      const d12Html = getIntervalPill(12, status.day12Date, !!app.intervalDay12?.completed, status.d12Missed);
+
+      const progressPct = Math.min(100, Math.round((daysElapsed / 14) * 100));
+
+      card.innerHTML = `
+        <div class="p-5 flex-1 space-y-4">
+          <!-- Card Header -->
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="font-bold text-slate-900 text-base truncate" title="${escapeHtml(app.name)}">${escapeHtml(app.name)}</h3>
+              <div class="flex items-center gap-2 mt-1 flex-wrap">
+                ${testerBadge}
+                ${statusTag}
+              </div>
+            </div>
+
+            <button class="btn-delete-card p-1 text-slate-400 hover:text-red-600 rounded transition" title="Delete app">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+
+          <!-- Two End Date Intervals (Mandatory 14d & Buffer 16d) -->
+          <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Start: <strong class="text-slate-700">${formatDisplayDate(app.startDate)}</strong></span>
+              <span>Elapsed: <strong class="text-slate-900">${daysElapsed} days</strong></span>
+            </div>
+
+            <!-- Visual Progress -->
+            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-300 ${isMandatoryDone ? 'bg-emerald-500' : 'bg-indigo-600'}" style="width: ${progressPct}%"></div>
+            </div>
+
+            <!-- 2 Intervals Display -->
+            <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60 text-xs">
+              <div class="bg-white rounded-lg p-2 border border-slate-200/70">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Mandatory (14d)</span>
+                <strong class="text-emerald-700 text-xs block">${formatDisplayDate(mandatoryEnd)}</strong>
+                <span class="text-[10px] text-slate-500">${daysLeftMandatory <= 0 ? '✓ Goal Reached' : `${daysLeftMandatory} days left`}</span>
+              </div>
+
+              <div class="bg-white rounded-lg p-2 border border-slate-200/70">
+                <span class="text-slate-400 block text-[10px] uppercase font-bold">Buffer (16d)</span>
+                <strong class="text-indigo-700 text-xs block">${formatDisplayDate(bufferEnd)}</strong>
+                <span class="text-[10px] text-slate-500">${daysLeftBuffer <= 0 ? '✓ Buffer Reached' : `${daysLeftBuffer} days left`}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3 Testing Intervals Checkpoints (Day 3, 7, 12) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] text-slate-500">
+              <span class="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Testing Checkpoints</span>
+              <span class="text-slate-400">Click to toggle test</span>
+            </div>
+            <div class="flex items-center gap-2">
+              ${d3Html}
+              ${d7Html}
+              ${d12Html}
+            </div>
+            ${status.isOverdue ? '<p class="text-[11px] text-red-600 font-semibold mt-1">⚠️ You missed a testing interval! Open app and click above to mark tested.</p>' : ''}
+          </div>
+
+          <!-- Optional Testing Link / Notes -->
+          ${app.testingLink ? `
+            <div class="text-xs truncate flex items-center gap-1.5 text-slate-500">
+              <span>Link:</span>
+              <a href="${escapeHtml(app.testingLink)}" target="_blank" class="text-indigo-600 hover:underline truncate">${escapeHtml(app.testingLink)}</a>
+            </div>
+          ` : ''}
+
+          ${app.notes ? `
+            <div class="text-[11px] text-slate-500 italic bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+              ${escapeHtml(app.notes)}
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Footer: Complete or Finish Button -->
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center gap-2">
+          <button class="btn-complete-app w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 shadow-xs ${
+            isMandatoryDone
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'
+          }">
+            <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+            <span>Complete &amp; Remove from Site</span>
+          </button>
+        </div>
+      `;
+
+      card.querySelectorAll('.btn-toggle-interval').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayNum = parseInt(btn.getAttribute('data-interval'), 10);
+          toggleInterval(app.id, dayNum);
+        });
+      });
+
+      card.querySelector('.btn-complete-app').addEventListener('click', () => {
+        showConfirmDialog(
+          'Complete & Remove App',
+          `Finish testing "${app.name}"? This app will be completely removed from the site.`,
+          () => {
+            removePeerApp(app.id, 'App testing completed & removed!');
+          }
+        );
+      });
+
+      card.querySelector('.btn-delete-card').addEventListener('click', () => {
+        showConfirmDialog(
+          'Delete App',
+          `Permanently remove "${app.name}" from your testing list?`,
+          () => {
+            removePeerApp(app.id, 'App removed.');
+          }
+        );
+      });
+
+      return card;
+    }
+
+    function toggleInterval(appId, dayNum) {
+      const app = state.peerApps.find(a => a.id === appId);
+      if (!app) return;
+
+      const key = `intervalDay${dayNum}`;
+      if (!app[key]) app[key] = { completed: false, completedAt: null };
+
+      app[key].completed = !app[key].completed;
+      app[key].completedAt = app[key].completed ? new Date().toISOString() : null;
+
+      saveData();
+      render();
+      showToast(app[key].completed ? `Day ${dayNum} test logged!` : `Day ${dayNum} test unchecked.`, 'info');
+    }
+
+    function removePeerApp(appId, msg = 'App removed.') {
+      state.peerApps = state.peerApps.filter(a => a.id !== appId);
+      saveData();
+      render();
+      showToast(msg, 'success');
+    }
+
+    // -------------------------------------------------------------
+    // MODAL & FORM OPERATIONS
+    // -------------------------------------------------------------
+    function openAddPeerAppModal() {
+      document.getElementById('inputPeerAppName').value = '';
+      document.getElementById('inputPeerTestingLink').value = '';
+      document.getElementById('inputPeerNotes').value = '';
+
+      const todayStr = toISODate(new Date());
+      document.getElementById('inputPeerStartDate').value = todayStr;
+      updateSchedulePreview(todayStr);
+
+      document.getElementById('modalAddPeerApp').classList.remove('hidden');
+    }
+
+    function updateSchedulePreview(startIsoDate) {
+      if (!startIsoDate) return;
+      const d3 = addDays(startIsoDate, 3);
+      const d7 = addDays(startIsoDate, 7);
+      const d12 = addDays(startIsoDate, 12);
+      const d14 = addDays(startIsoDate, 14);
+      const d16 = addDays(startIsoDate, 16);
+
+      document.getElementById('previewMandatoryEnd').textContent = `${d14} (${formatDisplayDate(d14)})`;
+      document.getElementById('previewBufferEnd').textContent = `${d16} (${formatDisplayDate(d16)})`;
+      document.getElementById('previewDay3Date').textContent = formatDisplayDate(d3);
+      document.getElementById('previewDay7Date').textContent = formatDisplayDate(d7);
+      document.getElementById('previewDay12Date').textContent = formatDisplayDate(d12);
+    }
+
+    function openSettingsModal() {
+      document.getElementById('inputWorkerUrl').value = state.syncConfig.workerUrl || '';
+      document.getElementById('inputSyncKey').value = state.syncConfig.syncKey || '';
+      document.getElementById('chkAutoSync').checked = state.syncConfig.autoSync !== false;
+      document.getElementById('modalSettings').classList.remove('hidden');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+
+      let colors = 'bg-slate-900 text-white border-slate-700';
+      if (type === 'success') colors = 'bg-emerald-600 text-white border-emerald-700';
+      if (type === 'error') colors = 'bg-red-600 text-white border-red-700';
+
+      toast.className = `pointer-events-auto px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg border flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 ${colors}`;
+      toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function showConfirmDialog(title, message, onConfirm) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMessage').textContent = message;
+      pendingConfirmCallback = onConfirm;
+      document.getElementById('modalConfirm').classList.remove('hidden');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // -------------------------------------------------------------
+    // SAMPLE DATA FOR TESTING OTHERS
+    // -------------------------------------------------------------
+    function loadSamplePeerData() {
+      const today = new Date();
+
+      const start1 = new Date();
+      start1.setDate(today.getDate() - 4);
+
+      const start2 = new Date();
+      start2.setDate(today.getDate() - 8);
+
+      const start3 = new Date();
+      start3.setDate(today.getDate() - 15);
+
+      state.peerApps = [
+        {
+          id: 'peer_' + Date.now() + '_1',
+          name: 'FocusFlow Pomodoro & Tasks',
+          tester: 'Mazen',
+          startDate: toISODate(start1),
+          testingLink: 'https://play.google.com/apps/testing/com.focusflow.app',
+          notes: 'Reddit Closed Testing swap with u/AlexDev',
+          createdAt: new Date().toISOString(),
+          intervalDay3: { completed: false, completedAt: null },
+          intervalDay7: { completed: false, completedAt: null },
+          intervalDay12: { completed: false, completedAt: null }
+        },
+        {
+          id: 'peer_' + Date.now() + '_2',
+          name: 'CryptoTrack Portfolio AI',
+          tester: 'Marwan',
+          startDate: toISODate(start2),
+          testingLink: 'https://play.google.com/apps/testing/com.cryptotrack.wallet',
+          notes: 'Discord dev swap',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          intervalDay3: { completed: true, completedAt: new Date(Date.now() - 5 * 86400000).toISOString() },
+          intervalDay7: { completed: true, completedAt: new Date(Date.now() - 86400000).toISOString() },
+          intervalDay12: { completed: false, completedAt: null }
+        },
+        {
+          id: 'peer_' + Date.now() + '_3',
+          name: 'HabitHero Daily Streaks',
+          tester: 'Mazen',
+          startDate: toISODate(start3),
+          testingLink: 'https://play.google.com/apps/testing/com.habithero.app',
+          notes: '14 days done! Ready to complete.',
+          createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
+          intervalDay3: { completed: true, completedAt: new Date(Date.now() - 12 * 86400000).toISOString() },
+          intervalDay7: { completed: true, completedAt: new Date(Date.now() - 8 * 86400000).toISOString() },
+          intervalDay12: { completed: true, completedAt: new Date(Date.now() - 3 * 86400000).toISOString() }
+        }
+      ];
+
+      saveData();
+      render();
+      showToast('Loaded sample peer testing apps!', 'success');
+    }
+
+    // -------------------------------------------------------------
+    // EVENT BINDINGS
+    // -------------------------------------------------------------
+    function initEvents() {
+      const btnNavMyApps = document.getElementById('btnNavMyApps');
+      if (btnNavMyApps) {
+        btnNavMyApps.addEventListener('click', () => {
+          window.location.href = 'index.html';
+        });
+      }
+
+      document.getElementById('btnOpenAddPeerApp').addEventListener('click', openAddPeerAppModal);
+      document.getElementById('btnEmptyAddPeerApp').addEventListener('click', openAddPeerAppModal);
+      document.getElementById('btnCloseAddPeerApp').addEventListener('click', () => {
+        document.getElementById('modalAddPeerApp').classList.add('hidden');
+      });
+      document.getElementById('btnCancelAddPeerApp').addEventListener('click', () => {
+        document.getElementById('modalAddPeerApp').classList.add('hidden');
+      });
+
+      document.getElementById('btnEmptySamplePeerData').addEventListener('click', loadSamplePeerData);
+
+      document.getElementById('inputPeerStartDate').addEventListener('input', (e) => {
+        updateSchedulePreview(e.target.value);
+      });
+
+      document.getElementById('formAddPeerApp').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = document.getElementById('inputPeerAppName').value.trim();
+        const tester = document.querySelector('input[name="radioTester"]:checked')?.value || 'Mazen';
+        const startDate = document.getElementById('inputPeerStartDate').value;
+        const testingLink = document.getElementById('inputPeerTestingLink').value.trim();
+        const notes = document.getElementById('inputPeerNotes').value.trim();
+
+        if (!name || !startDate) return;
+
+        const newApp = {
+          id: 'peer_' + Date.now(),
+          name,
+          tester,
+          startDate,
+          testingLink,
+          notes,
+          createdAt: new Date().toISOString(),
+          intervalDay3: { completed: false, completedAt: null },
+          intervalDay7: { completed: false, completedAt: null },
+          intervalDay12: { completed: false, completedAt: null }
+        };
+
+        state.peerApps.unshift(newApp);
+        saveData();
+        render();
+        document.getElementById('modalAddPeerApp').classList.add('hidden');
+        showToast(`Added "${name}" for ${tester}!`, 'success');
+      });
+
+      document.getElementById('filterBtnAll').addEventListener('click', () => {
+        state.filterUser = 'all';
+        render();
+      });
+      document.getElementById('filterBtnMazen').addEventListener('click', () => {
+        state.filterUser = 'Mazen';
+        render();
+      });
+      document.getElementById('filterBtnMarwan').addEventListener('click', () => {
+        state.filterUser = 'Marwan';
+        render();
+      });
+      document.getElementById('filterBtnOverdue').addEventListener('click', () => {
+        state.filterUser = 'overdue';
+        render();
+      });
+
+      document.getElementById('inputSearchPeerApp').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value.trim();
+        render();
+      });
+      document.getElementById('selectSortPeerApps').addEventListener('change', (e) => {
+        state.sortBy = e.target.value;
+        render();
+      });
+
+      document.getElementById('btnOpenSettings').addEventListener('click', openSettingsModal);
+      document.getElementById('btnSyncStatus').addEventListener('click', openSettingsModal);
+      document.getElementById('btnCloseSettings').addEventListener('click', () => {
+        document.getElementById('modalSettings').classList.add('hidden');
+      });
+      document.getElementById('btnCloseSettingsBottom').addEventListener('click', () => {
+        document.getElementById('modalSettings').classList.add('hidden');
+      });
+
+      document.getElementById('btnQuickSync').addEventListener('click', () => {
+        if (!state.syncConfig.workerUrl || !state.syncConfig.syncKey) {
+          openSettingsModal();
+        } else {
+          pushToCloudflare(true);
+        }
+      });
+
+      document.getElementById('btnPullFromCloud').addEventListener('click', () => {
+        pullFromCloudflare(true);
+      });
+
+      document.getElementById('formSyncSettings').addEventListener('submit', (e) => {
+        e.preventDefault();
+        let workerUrl = document.getElementById('inputWorkerUrl').value.trim();
+        const syncKey = document.getElementById('inputSyncKey').value.trim();
+        const autoSync = document.getElementById('chkAutoSync').checked;
+
+        if (workerUrl && !workerUrl.startsWith('http://') && !workerUrl.startsWith('https://')) {
+          workerUrl = 'https://' + workerUrl;
+        }
+
+        state.syncConfig.workerUrl = workerUrl;
+        state.syncConfig.syncKey = syncKey;
+        state.syncConfig.autoSync = autoSync;
+        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+        updateSyncUI();
+        showToast('Sync settings saved!', 'success');
+
+        if (workerUrl && syncKey) pushToCloudflare(true);
+      });
+
+      document.getElementById('btnConfirmCancel').addEventListener('click', () => {
+        document.getElementById('modalConfirm').classList.add('hidden');
+        pendingConfirmCallback = null;
+      });
+      document.getElementById('btnConfirmOk').addEventListener('click', () => {
+        document.getElementById('modalConfirm').classList.add('hidden');
+        if (typeof pendingConfirmCallback === 'function') {
+          pendingConfirmCallback();
+          pendingConfirmCallback = null;
+        }
+      });
+    }
+
+    function init() {
+      loadData();
+      initEvents();
+      updateSyncUI();
+      render();
+
+      if (state.syncConfig.workerUrl && state.syncConfig.syncKey) {
+        pullFromCloudflare(false);
+      } else if (state.peerApps.length === 0) {
+        loadSamplePeerData();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>

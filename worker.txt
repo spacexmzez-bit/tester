@@ -1,0 +1,166 @@
+/**
+ * Google Play 12-Tester & Peer App Testing Sync - Cloudflare Worker
+ * Lightweight, non-overengineered JSON sync engine with KV backing and CORS support.
+ * Stores both "My Apps" (12 testers requirement) and "Peer Apps" (testing others' apps by Mazen/Marwan).
+ */
+
+// In-memory fallback for local testing or before KV namespace is configured
+const memoryStore = new Map();
+
+function corsHeaders(request) {
+  const origin = request.headers.get('Origin') || '*';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, x-sync-key, Authorization',
+    'Access-Control-Max-Age': '86400',
+  };
+}
+
+function jsonResponse(data, status = 200, request = null) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(request ? corsHeaders(request) : { 'Access-Control-Allow-Origin': '*' }),
+  };
+  return new Response(JSON.stringify(data, null, 2), { status, headers });
+}
+
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(request),
+      });
+    }
+
+    // Health check endpoint
+    if (url.pathname === '/' || url.pathname === '/api/health') {
+      return jsonResponse({
+        status: 'ok',
+        service: 'Google Play 12-Tester & Peer Testing Sync Worker',
+        version: '1.1.0',
+        kvBound: !!env.PLAY_TESTER_KV,
+        timestamp: new Date().toISOString(),
+      }, 200, request);
+    }
+
+    // Sync API endpoints
+    if (url.pathname === '/api/sync') {
+      // Extract sync passkey from header or query parameter
+      const syncKey = request.headers.get('x-sync-key') || url.searchParams.get('key');
+      if (!syncKey || syncKey.trim().length === 0) {
+        return jsonResponse({
+          success: false,
+          error: 'Missing sync key. Provide via x-sync-key header or ?key= query parameter.',
+        }, 400, request);
+      }
+
+      const storageKey = `sync:${syncKey.trim()}`;
+
+      // GET: Retrieve user data
+      if (request.method === 'GET') {
+        try {
+          let stored = null;
+          if (env.PLAY_TESTER_KV) {
+            stored = await env.PLAY_TESTER_KV.get(storageKey, { type: 'json' });
+          } else {
+            stored = memoryStore.get(storageKey) || null;
+          }
+
+          if (!stored) {
+            return jsonResponse({
+              success: true,
+              exists: false,
+              data: null,
+              message: 'No data found for this sync key. Ready to receive initial push.',
+            }, 200, request);
+          }
+
+          return jsonResponse({
+            success: true,
+            exists: true,
+            data: stored,
+            retrievedAt: new Date().toISOString(),
+          }, 200, request);
+        } catch (err) {
+          return jsonResponse({
+            success: false,
+            error: `Failed to read sync data: ${err.message}`,
+          }, 500, request);
+        }
+      }
+
+      // POST: Save user data
+      if (request.method === 'POST') {
+        try {
+          const payload = await request.json();
+
+          if (!payload || typeof payload !== 'object') {
+            return jsonResponse({
+              success: false,
+              error: 'Invalid payload. Expected JSON object with apps, peerApps, and categories.',
+            }, 400, request);
+          }
+
+          // Fetch existing data to safely merge partial updates from either page
+          let existingData = null;
+          if (env.PLAY_TESTER_KV) {
+            existingData = await env.PLAY_TESTER_KV.get(storageKey, { type: 'json' });
+          } else {
+            existingData = memoryStore.get(storageKey) || null;
+          }
+
+          // Merge payload with existing data
+          const dataToSave = {
+            apps: Array.isArray(payload.apps)
+              ? payload.apps
+              : (existingData?.apps || []),
+            peerApps: Array.isArray(payload.peerApps)
+              ? payload.peerApps
+              : (existingData?.peerApps || []),
+            categories: Array.isArray(payload.categories)
+              ? payload.categories
+              : (existingData?.categories || []),
+            updatedAt: payload.updatedAt || new Date().toISOString(),
+            clientVersion: payload.clientVersion || '1.1',
+          };
+
+          const serialized = JSON.stringify(dataToSave);
+          if (serialized.length > 5 * 1024 * 1024) {
+            return jsonResponse({
+              success: false,
+              error: 'Payload exceeds 5MB limit.',
+            }, 413, request);
+          }
+
+          if (env.PLAY_TESTER_KV) {
+            await env.PLAY_TESTER_KV.put(storageKey, serialized);
+          } else {
+            memoryStore.set(storageKey, dataToSave);
+          }
+
+          return jsonResponse({
+            success: true,
+            message: 'Sync data saved successfully',
+            updatedAt: dataToSave.updatedAt,
+            appCount: dataToSave.apps.length,
+            peerAppCount: dataToSave.peerApps.length,
+          }, 200, request);
+        } catch (err) {
+          return jsonResponse({
+            success: false,
+            error: `Failed to store sync data: ${err.message}`,
+          }, 500, request);
+        }
+      }
+
+      return jsonResponse({ success: false, error: 'Method not allowed' }, 405, request);
+    }
+
+    return jsonResponse({ success: false, error: 'Not Found' }, 404, request);
+  },
+};
