@@ -175,9 +175,7 @@
         <button id="btnEmptyAddPeerApp" type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
           + Add First App
         </button>
-        <button id="btnEmptySamplePeerData" type="button" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition">
-          Load Sample Tests
-        </button>
+        
       </div>
     </div>
 
@@ -457,20 +455,29 @@
         const raw = localStorage.getItem(STORAGE_KEY_PEER);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) state.peerApps = parsed;
+          if (Array.isArray(parsed)) {
+            // Filter out any leftover demo apps
+            state.peerApps = parsed.filter(a => !a.id.includes('_1') && !a.id.includes('_2') && !a.id.includes('_3') && !a.name.includes('FocusFlow') && !a.name.includes('CryptoTrack') && !a.name.includes('HabitHero'));
+          }
         }
       } catch (e) {
         console.error('Error loading peer apps', e);
       }
 
+      // Load Sync Config from primary and individual persistent keys
       try {
         const rawConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
         if (rawConfig) {
           state.syncConfig = { ...state.syncConfig, ...JSON.parse(rawConfig) };
         }
-      } catch (e) {
-        console.error('Error loading sync config', e);
-      }
+      } catch (e) {}
+
+      try {
+        const savedUrl = localStorage.getItem('gp_sync_worker_url');
+        const savedKey = localStorage.getItem('gp_sync_passkey');
+        if (savedUrl && !state.syncConfig.workerUrl) state.syncConfig.workerUrl = savedUrl;
+        if (savedKey && !state.syncConfig.syncKey) state.syncConfig.syncKey = savedKey;
+      } catch (e) {}
     }
 
     function saveData(triggerSync = true) {
@@ -1088,7 +1095,7 @@
         document.getElementById('modalAddPeerApp').classList.add('hidden');
       });
 
-      document.getElementById('btnEmptySamplePeerData').addEventListener('click', loadSamplePeerData);
+      // Sample data removed on empty state
 
       document.getElementById('inputPeerStartDate').addEventListener('input', (e) => {
         updateSchedulePreview(e.target.value);
@@ -1184,11 +1191,36 @@
         state.syncConfig.workerUrl = workerUrl;
         state.syncConfig.syncKey = syncKey;
         state.syncConfig.autoSync = autoSync;
-        localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+        try {
+          localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+          if (workerUrl) localStorage.setItem('gp_sync_worker_url', workerUrl);
+          if (syncKey) localStorage.setItem('gp_sync_passkey', syncKey);
+        } catch(e) {}
         updateSyncUI();
-        showToast('Sync settings saved!', 'success');
+        showToast('Sync settings saved to browser!', 'success');
 
         if (workerUrl && syncKey) pushToCloudflare(true);
+      });
+
+      // Instant auto-save to browser storage on typing
+      document.getElementById('inputWorkerUrl').addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        state.syncConfig.workerUrl = val;
+        try {
+          localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+          localStorage.setItem('gp_sync_worker_url', val);
+        } catch(err) {}
+        updateSyncUI();
+      });
+
+      document.getElementById('inputSyncKey').addEventListener('input', (e) => {
+        const val = e.target.value.trim();
+        state.syncConfig.syncKey = val;
+        try {
+          localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+          localStorage.setItem('gp_sync_passkey', val);
+        } catch(err) {}
+        updateSyncUI();
       });
 
       document.getElementById('btnConfirmCancel').addEventListener('click', () => {
@@ -1210,10 +1242,10 @@
       updateSyncUI();
       render();
 
+      // Automatically pull from cloud on page load if credentials exist
       if (state.syncConfig.workerUrl && state.syncConfig.syncKey) {
-        pullFromCloudflare(false);
-      } else if (state.peerApps.length === 0) {
-        loadSamplePeerData();
+        showToast('Connecting & automatically pulling data from cloud...', 'info');
+        pullFromCloudflare(true);
       }
     }
 

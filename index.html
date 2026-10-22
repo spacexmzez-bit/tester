@@ -172,9 +172,7 @@
         <button id="btnEmptyAddApp" type="button" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
           + Add First App
         </button>
-        <button id="btnEmptySampleData" type="button" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-medium rounded-lg transition">
-          Load Sample Apps
-        </button>
+        
       </div>
     </div>
 
@@ -667,13 +665,7 @@
     const STORAGE_KEY_DATA = 'gp_tester_data';
     const STORAGE_KEY_CONFIG = 'gp_tester_sync_config';
 
-    const DEFAULT_CATEGORIES = [
-      { id: 'cat_prod', name: 'Productivity', color: 'indigo' },
-      { id: 'cat_games', name: 'Games', color: 'purple' },
-      { id: 'cat_tools', name: 'Tools & Utilities', color: 'emerald' },
-      { id: 'cat_finance', name: 'Finance', color: 'amber' },
-      { id: 'cat_health', name: 'Health & Fitness', color: 'rose' }
-    ];
+    const DEFAULT_CATEGORIES = [];
 
     // Color definitions for badges
     const COLOR_MAP = {
@@ -689,7 +681,7 @@
     // State
     let state = {
       apps: [],
-      categories: [...DEFAULT_CATEGORIES],
+      categories: [],
       filterCategory: 'all',
       searchQuery: '',
       sortBy: 'recent',
@@ -716,23 +708,32 @@
         const rawData = localStorage.getItem(STORAGE_KEY_DATA);
         if (rawData) {
           const parsed = JSON.parse(rawData);
-          if (Array.isArray(parsed.apps)) state.apps = parsed.apps;
-          if (Array.isArray(parsed.categories) && parsed.categories.length > 0) {
-            state.categories = parsed.categories;
+          if (Array.isArray(parsed.apps)) {
+            // Filter out any leftover sample/demo apps
+            state.apps = parsed.apps.filter(a => !a.id.startsWith('app_sample_'));
+          }
+          if (Array.isArray(parsed.categories)) {
+            state.categories = parsed.categories.filter(c => !c.id.startsWith('cat_prod') && !c.id.startsWith('cat_games') && !c.id.startsWith('cat_tools') && !c.id.startsWith('cat_finance') && !c.id.startsWith('cat_health'));
           }
         }
       } catch (e) {
         console.error('Error loading data from localStorage', e);
       }
 
+      // Load Sync Config from primary and individual persistent keys
       try {
         const rawConfig = localStorage.getItem(STORAGE_KEY_CONFIG);
         if (rawConfig) {
           state.syncConfig = { ...state.syncConfig, ...JSON.parse(rawConfig) };
         }
-      } catch (e) {
-        console.error('Error loading config from localStorage', e);
-      }
+      } catch (e) {}
+
+      try {
+        const savedUrl = localStorage.getItem('gp_sync_worker_url');
+        const savedKey = localStorage.getItem('gp_sync_passkey');
+        if (savedUrl && !state.syncConfig.workerUrl) state.syncConfig.workerUrl = savedUrl;
+        if (savedKey && !state.syncConfig.syncKey) state.syncConfig.syncKey = savedKey;
+      } catch (e) {}
     }
 
     function saveStateToStorage(triggerSync = true) {
@@ -755,6 +756,8 @@
     function saveConfigToStorage() {
       try {
         localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(state.syncConfig));
+        if (state.syncConfig.workerUrl) localStorage.setItem('gp_sync_worker_url', state.syncConfig.workerUrl);
+        if (state.syncConfig.syncKey) localStorage.setItem('gp_sync_passkey', state.syncConfig.syncKey);
       } catch (e) {
         console.error('Failed to save config', e);
       }
@@ -1592,6 +1595,14 @@
       const select = document.getElementById('selectAppCategory');
       select.innerHTML = '';
 
+      if (state.categories.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = '-- No Categories Configured (Optional) --';
+        select.appendChild(opt);
+        return;
+      }
+
       state.categories.forEach(cat => {
         const opt = document.createElement('option');
         opt.value = cat.id;
@@ -1896,7 +1907,7 @@
       // Header Buttons
       document.getElementById('btnOpenAddApp').addEventListener('click', openAddAppModal);
       document.getElementById('btnEmptyAddApp').addEventListener('click', openAddAppModal);
-      document.getElementById('btnEmptySampleData').addEventListener('click', loadSampleApps);
+      // Sample data removed on empty state
       document.getElementById('btnLoadSampleData').addEventListener('click', loadSampleApps);
 
       document.getElementById('btnOpenSettings').addEventListener('click', () => openSettingsModal('sync'));
@@ -2101,6 +2112,18 @@
         }
       });
 
+      // Instant auto-save to browser storage on typing
+      document.getElementById('inputWorkerUrl').addEventListener('input', (e) => {
+        state.syncConfig.workerUrl = e.target.value.trim();
+        saveConfigToStorage();
+        updateSyncBadgeUI();
+      });
+      document.getElementById('inputSyncKey').addEventListener('input', (e) => {
+        state.syncConfig.syncKey = e.target.value.trim();
+        saveConfigToStorage();
+        updateSyncBadgeUI();
+      });
+
       document.getElementById('btnGenSettingsKey').addEventListener('click', () => {
         const chars = 'abcdefghjkmnpqrstuvwxyz23456789';
         let key = 'sync-';
@@ -2240,12 +2263,10 @@
       updateSyncBadgeUI();
       renderDashboard();
 
-      // If user has Cloudflare config, attempt initial background pull
+      // Auto-pull from cloud on page load if worker URL and passkey are saved
       if (state.syncConfig.workerUrl && state.syncConfig.syncKey) {
-        pullDataFromCloudflare(false);
-      } else if (state.apps.length === 0) {
-        // Pre-load sample data on first visit so user immediately sees how it looks!
-        loadSampleApps();
+        showToast('Connecting & automatically pulling data from cloud...', 'info');
+        pullDataFromCloudflare(true);
       }
     }
 
