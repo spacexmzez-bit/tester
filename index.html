@@ -16,6 +16,8 @@
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .day-box { transition: all 0.15s ease; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     .day-box:hover { transform: scale(1.1); }
   </style>
 </head>
@@ -23,69 +25,76 @@
 
   <!-- Top Navigation Bar -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-      <!-- Brand Logo & Title -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-sm font-extrabold text-base tracking-tight">
-          ▶12
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Google Play 12-Tester Tracker</h1>
-            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              14-Day Cycle
-            </span>
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <!-- Top Row: Logo, Title, and Action Buttons -->
+      <div class="h-14 sm:h-16 flex items-center justify-between gap-2">
+        <!-- Brand & Title -->
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-xs font-extrabold text-sm sm:text-base shrink-0">
+            ▶12
           </div>
-          <p class="text-xs text-slate-500 hidden sm:block">Closed testing compliance &amp; cross-device sync</p>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-extrabold text-slate-900 text-sm sm:text-base leading-tight truncate">Google Play 12-Tester</h1>
+              <span class="hidden md:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">14-Day Cycle</span>
+            </div>
+            <p class="text-[11px] text-slate-500 hidden sm:block">Closed testing compliance &amp; cross-device sync</p>
+          </div>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <!-- Cloudflare Sync Status Pill -->
+          <button id="btnSyncStatus" type="button" class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" title="Click to open Cloudflare sync settings">
+            <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span id="syncStatusText" class="hidden md:inline">Local Only</span>
+            <svg id="syncIconSpin" class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+
+          <!-- Quick Sync Button (Desktop) -->
+          <button id="btnQuickSync" type="button" class="hidden sm:inline-flex p-1.5 sm:p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 transition" title="Sync with Cloudflare now">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+
+          <!-- Guide (Desktop) -->
+          <button id="btnOpenGuide" type="button" class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition" title="Open setup instructions">
+            <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            <span>Guide</span>
+          </button>
+
+          <!-- Settings Button -->
+          <button id="btnOpenSettings" type="button" class="p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg border border-slate-200 transition" title="Open Settings">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </button>
+
+          <!-- Add App Button -->
+          <button id="btnOpenAddApp" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Add App</span>
+          </button>
         </div>
       </div>
 
-      <!-- Header Actions & Sync Status -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Switch to Testing Other People's Apps -->
-        <button id="btnNavTestingOthers" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition" title="Go to Testing Other People's Apps">
-          <span>Testing Others</span>
-          <span class="hidden sm:inline">(Mazen/Marwan)</span>
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-        </button>
-
-        <!-- Cloudflare Sync Status Pill -->
-        <button id="btnSyncStatus" type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" title="Click to open Cloudflare sync settings">
-          <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-          <span id="syncStatusText" class="hidden md:inline">Local Only</span>
-          <svg id="syncIconSpin" class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        </button>
-
-        <!-- Quick Sync Button -->
-        <button id="btnQuickSync" type="button" class="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg border border-slate-200 transition" title="Sync with Cloudflare now">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        </button>
-
-        <!-- Setup Guide Button -->
-        <button id="btnOpenGuide" type="button" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition" title="Open setup instructions">
-          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          <span>Guide</span>
-        </button>
-
-        <!-- Settings Button -->
-        <button id="btnOpenSettings" type="button" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-slate-200 transition" title="Open Settings">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        </button>
-
-        <!-- Add App Button -->
-        <button id="btnOpenAddApp" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow-sm shadow-emerald-600/20 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          <span>Add App</span>
-        </button>
+      <!-- Bottom Row: Navigation Switcher Bar (Mobile & Desktop) -->
+      <div class="py-1.5 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div class="grid grid-cols-2 gap-1 bg-slate-100 p-0.5 rounded-xl w-full sm:w-auto text-xs font-semibold">
+          <button type="button" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs flex items-center justify-center gap-1.5">
+            <span>📱 My Apps (12 Testers)</span>
+          </button>
+          <button id="btnNavTestingOthers" type="button" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/60 transition flex items-center justify-center gap-1.5">
+            <span>👥 Testing Others</span>
+            <span class="text-[10px] text-indigo-600 font-bold hidden sm:inline">(Mazen/Marwan)</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
 
     <!-- Metrics Cards Banner -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center justify-between">
         <div>
           <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Apps</p>
@@ -149,7 +158,7 @@
       </div>
 
       <!-- Category Filter Pills -->
-      <div class="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1" id="categoryFilterContainer">
+      <div class="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1" id="categoryFilterContainer" class="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         <!-- Dynamically rendered category pills -->
       </div>
     </div>
@@ -413,13 +422,18 @@
           </div>
         </div>
 
-        <div class="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
-          <button id="btnCancelAppSave" type="button" class="px-4 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
-            Cancel
+        <div class="pt-4 border-t border-slate-200 flex items-center justify-between gap-2">
+          <button id="btnDeleteFromEditModal" type="button" class="hidden text-xs font-semibold text-red-600 hover:text-red-700 hover:underline">
+            Delete this app
           </button>
-          <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
-            Save App
-          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button id="btnCancelAppSave" type="button" class="px-4 py-2 border border-slate-300 rounded-lg text-xs sm:text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+              Cancel
+            </button>
+            <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm transition">
+              Save App
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -1130,6 +1144,9 @@
               <button class="btn-edit-app p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition" title="Edit App">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
               </button>
+              <button class="btn-delete-card-app p-1.5 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition" title="Delete App">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
             </div>
           </div>
 
@@ -1195,6 +1212,20 @@
       card.querySelector('.btn-edit-app').addEventListener('click', (e) => {
         e.stopPropagation();
         openEditAppModal(app.id);
+      });
+
+      card.querySelector('.btn-delete-card-app').addEventListener('click', (e) => {
+        e.stopPropagation();
+        showConfirmDialog(
+          'Delete App',
+          `Are you sure you want to permanently delete "${app.name}" and all of its testers? This action cannot be undone.`,
+          () => {
+            state.apps = state.apps.filter(a => a.id !== app.id);
+            saveStateToStorage();
+            renderDashboard();
+            showToast(`Deleted "${app.name}".`, 'info');
+          }
+        );
       });
 
       card.querySelector('.btn-copy-card-link').addEventListener('click', (e) => {
@@ -1569,6 +1600,7 @@
       document.getElementById('inputAppIconUrl').value = '';
       document.getElementById('inputAppTargetTesters').value = '12';
       document.getElementById('appIconPreviewBox').textContent = '📱';
+      document.getElementById('btnDeleteFromEditModal').classList.add('hidden');
 
       populateCategoryDropdown();
       document.getElementById('modalAddApp').classList.remove('hidden');
@@ -1587,6 +1619,7 @@
 
       populateCategoryDropdown(app.categoryId);
       updateAppIconPreview(app.icon || '📱');
+      document.getElementById('btnDeleteFromEditModal').classList.remove('hidden');
 
       document.getElementById('modalAddApp').classList.remove('hidden');
     }
@@ -1991,6 +2024,23 @@
       });
       document.getElementById('btnCancelAppSave').addEventListener('click', () => {
         document.getElementById('modalAddApp').classList.add('hidden');
+      });
+
+      document.getElementById('btnDeleteFromEditModal').addEventListener('click', () => {
+        const editId = document.getElementById('inputAppEditId').value;
+        const app = state.apps.find(a => a.id === editId);
+        if (!app) return;
+        showConfirmDialog(
+          'Delete App',
+          `Are you sure you want to permanently delete "${app.name}" and all of its testers? This action cannot be undone.`,
+          () => {
+            state.apps = state.apps.filter(a => a.id !== app.id);
+            saveStateToStorage();
+            document.getElementById('modalAddApp').classList.add('hidden');
+            renderDashboard();
+            showToast(`Deleted "${app.name}".`, 'info');
+          }
+        );
       });
 
       // App Detail Modal Event Listeners

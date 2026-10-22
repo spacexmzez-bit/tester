@@ -16,65 +16,74 @@
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     .interval-card { transition: all 0.2s ease; }
     .interval-card:hover { transform: translateY(-1px); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
   <!-- Top Navigation Bar -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-      <!-- Brand & Page Title -->
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-sm font-extrabold text-base tracking-tight">
-          👥
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-bold text-slate-900 text-base sm:text-lg leading-tight">Testing Other People's Apps</h1>
-            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              Mazen &amp; Marwan
-            </span>
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+      <!-- Top Row: Logo, Title, Actions -->
+      <div class="h-14 sm:h-16 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-xs font-extrabold text-sm sm:text-base shrink-0">
+            👥
           </div>
-          <p class="text-xs text-slate-500 hidden sm:block">Track 3d, 7d &amp; 12d testing intervals &bull; 14d Mandatory &amp; 16d Buffer</p>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-extrabold text-slate-900 text-sm sm:text-base leading-tight truncate">Testing Others' Apps</h1>
+              <span class="hidden md:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">Mazen &amp; Marwan</span>
+            </div>
+            <p class="text-[11px] text-slate-500 hidden sm:block">Track 3d, 7d &amp; 12d intervals &bull; 14d Mandatory &amp; 16d Buffer</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <!-- Sync Pill -->
+          <button id="btnSyncStatus" type="button" class="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" title="Click to open Cloudflare sync settings">
+            <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+            <span id="syncStatusText" class="hidden md:inline">Local Only</span>
+            <svg id="syncIconSpin" class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+
+          <!-- Quick Sync (Desktop) -->
+          <button id="btnQuickSync" type="button" class="hidden sm:inline-flex p-1.5 sm:p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 transition" title="Sync with Cloudflare now">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+
+          <!-- Settings -->
+          <button id="btnOpenSettings" type="button" class="p-1.5 sm:p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg border border-slate-200 transition" title="Open Settings">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </button>
+
+          <!-- Add App to Test -->
+          <button id="btnOpenAddPeerApp" type="button" class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Add App</span>
+          </button>
         </div>
       </div>
 
-      <!-- Header Actions -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Switch to My Apps (12-Tester) -->
-        <button id="btnNavMyApps" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 hover:text-emerald-700 transition" title="Go to My 12-Tester Apps Dashboard">
-          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-          <span class="hidden sm:inline">My Apps</span> (12 Testers)
-        </button>
-
-        <!-- Cloudflare Sync Status Pill -->
-        <button id="btnSyncStatus" type="button" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition cursor-pointer bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100" title="Click to open Cloudflare sync settings">
-          <span id="syncIndicatorDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-          <span id="syncStatusText" class="hidden md:inline">Local Only</span>
-          <svg id="syncIconSpin" class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        </button>
-
-        <!-- Quick Sync Button -->
-        <button id="btnQuickSync" type="button" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 transition" title="Sync with Cloudflare now">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        </button>
-
-        <!-- Settings Button -->
-        <button id="btnOpenSettings" type="button" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg border border-slate-200 transition" title="Open Settings">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        </button>
-
-        <!-- Add App Button -->
-        <button id="btnOpenAddPeerApp" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm shadow-indigo-600/20 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          <span>Add App to Test</span>
-        </button>
+      <!-- Bottom Row: Navigation Switcher Bar -->
+      <div class="py-1.5 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div class="grid grid-cols-2 gap-1 bg-slate-100 p-0.5 rounded-xl w-full sm:w-auto text-xs font-semibold">
+          <button id="btnNavMyApps" type="button" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-white/60 transition flex items-center justify-center gap-1.5">
+            <span>📱 My Apps</span>
+            <span class="text-[10px] text-emerald-600 font-bold hidden sm:inline">(12 Testers)</span>
+          </button>
+          <button type="button" class="px-3 py-1.5 rounded-lg bg-white text-slate-900 shadow-xs flex items-center justify-center gap-1.5">
+            <span>👥 Testing Others</span>
+            <span class="text-[10px] text-indigo-600 font-bold hidden sm:inline">(Mazen/Marwan)</span>
+          </button>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- Main Content Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex-1 w-full space-y-6">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-4 sm:space-y-6">
 
     <!-- Metrics Cards Banner -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -141,7 +150,7 @@
       </div>
 
       <!-- User Filter Tabs (All / Mazen / Marwan / Overdue) -->
-      <div class="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1" id="testerFilterBar">
+      <div class="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1" id="testerFilterBar" class="pt-2 border-t border-slate-100 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         <button id="filterBtnAll" type="button" class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition bg-slate-900 text-white shadow-xs">
           All Apps (<span id="countFilterAll">0</span>)
         </button>
