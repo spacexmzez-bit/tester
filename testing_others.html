@@ -91,11 +91,16 @@
         </div>
 
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <!-- Cloud Sync Pill -->
-          <button id="btnQuickSync" onclick="syncWithCloud('pull', false)" title="Click to pull latest from Cloudflare" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-300 transition">
+          <!-- Cloud Pull Button -->
+          <button id="btnQuickSync" onclick="syncWithCloud('pull', true)" title="Pull latest from Cloudflare (/api/sync)" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-slate-200 transition">
             <span id="syncDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
             <span id="syncStatusText" class="hidden sm:inline">Local</span>
-            <span class="text-slate-400">↻</span>
+            <span class="text-indigo-400 font-semibold">↓ Pull</span>
+          </button>
+
+          <!-- Cloud Push Button -->
+          <button id="btnQuickPush" onclick="syncWithCloud('push', true)" title="Push local data to Cloudflare (/api/sync)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs text-emerald-400 font-semibold transition">
+            ↑ Push
           </button>
 
           <!-- Settings Button -->
@@ -131,6 +136,14 @@
       </div>
     </div>
   </header>
+
+  <!-- KV WARNING BANNER (SHOWN IF CLOUDFLARE WORKER HAS NO KV BOUND) -->
+  <div id="kvWarningBanner" class="hidden bg-amber-950/90 border-b border-amber-500/40 px-4 py-2 text-xs text-amber-200">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+      <span>⚠️ <strong>Cloudflare KV Not Bound:</strong> Your Worker is currently using temporary memory that resets when idle. Bind <code>PLAY_TESTER_KV</code> in Cloudflare Worker Settings → Bindings so data persists permanently.</span>
+      <button onclick="document.getElementById('kvWarningBanner').classList.add('hidden')" class="text-amber-300 hover:text-white font-bold px-2">✕</button>
+    </div>
+  </div>
 
   <!-- MAIN CONTENT CONTAINER -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-6">
@@ -428,23 +441,30 @@
 
       <!-- Cloud Sync Configuration -->
       <div class="space-y-3">
-        <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Cloudflare Worker Sync</h4>
-        <div>
-          <label class="block text-xs text-slate-300 mb-1">Worker URL</label>
-          <input id="inputWorkerUrl" oninput="saveSyncCredentialsInstant()" type="url" placeholder="https://gp-tester-sync.yourname.workers.dev" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white" />
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Cloudflare Worker Sync</h4>
+          <span id="kvDiagnosticBadge" class="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-400">Not tested</span>
         </div>
         <div>
-          <label class="block text-xs text-slate-300 mb-1">Sync Passkey (X-Sync-Key)</label>
-          <input id="inputSyncKey" oninput="saveSyncCredentialsInstant()" type="password" placeholder="Your secret passkey" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white" />
+          <label class="block text-xs text-slate-300 mb-1">Worker URL</label>
+          <input id="inputWorkerUrl" oninput="saveSyncCredentialsInstant()" type="url" placeholder="https://play-tester-sync.yourname.workers.dev" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white" />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Sync Passkey (x-sync-key)</label>
+          <input id="inputSyncKey" oninput="saveSyncCredentialsInstant()" type="text" placeholder="Your secret passkey" class="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white" />
         </div>
         <div class="flex flex-wrap gap-2 pt-1">
           <button type="button" onclick="saveSettingsAndPull()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold">
-            Save &amp; Pull Now
+            ↓ Save &amp; Pull from Cloud
           </button>
           <button type="button" onclick="syncWithCloud('push', true)" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">
-            Force Push to Cloud
+            ↑ Force Push Local to Cloud
+          </button>
+          <button type="button" onclick="testCloudConnection()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold">
+            🔍 Test Connection
           </button>
         </div>
+        <div id="syncDiagnosticBox" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-300 space-y-1 font-mono"></div>
       </div>
 
       <!-- Categories Configuration -->
@@ -479,6 +499,8 @@
   <!-- APPLICATION LOGIC -->
   <script>
     const STORAGE_KEY = 'gp_tester_tracker_state_v2';
+    const LEGACY_APPS_KEY = 'gp_tester_apps_data';
+    const LEGACY_PEER_KEY = 'gp_peer_testing_data';
     const SYNC_CONFIG_KEY = 'gp_tester_sync_config';
     const LEGACY_URL_KEY = 'gp_sync_worker_url';
     const LEGACY_PASS_KEY = 'gp_sync_passkey';
@@ -488,7 +510,7 @@
       peerApps: [],      // Others' Apps (Mazen & Marwan)
       archivedApps: [],  // Completed apps archive
       trashedApps: [],   // Trash bin (restorable within 14d test window)
-      categories: [],    // User-configured categories (no default bloat)
+      categories: [],    // User-configured categories
       updatedAt: null
     };
 
@@ -510,7 +532,9 @@
 
     function addDays(dateStr, days) {
       if (!dateStr) return getTodayStr();
-      const parts = dateStr.split('-').map(Number);
+      const cleanStr = String(dateStr).split('T')[0];
+      const parts = cleanStr.split('-').map(Number);
+      if (parts.length !== 3 || isNaN(parts[0])) return getTodayStr();
       const dt = new Date(parts[0], parts[1] - 1, parts[2]);
       dt.setDate(dt.getDate() + days);
       const y = dt.getFullYear();
@@ -521,8 +545,10 @@
 
     function diffDays(startStr, endStr) {
       if (!startStr || !endStr) return 0;
-      const sParts = startStr.split('-').map(Number);
-      const eParts = endStr.split('-').map(Number);
+      const sClean = String(startStr).split('T')[0];
+      const eClean = String(endStr).split('T')[0];
+      const sParts = sClean.split('-').map(Number);
+      const eParts = eClean.split('-').map(Number);
       const s = new Date(sParts[0], sParts[1] - 1, sParts[2]);
       const e = new Date(eParts[0], eParts[1] - 1, eParts[2]);
       return Math.floor((e - s) / (1000 * 60 * 60 * 24));
@@ -530,10 +556,50 @@
 
     function formatShortDate(dateStr) {
       if (!dateStr) return '-';
-      const parts = dateStr.split('-').map(Number);
-      if (parts.length !== 3) return dateStr;
+      const cleanStr = String(dateStr).split('T')[0];
+      const parts = cleanStr.split('-').map(Number);
+      if (parts.length !== 3 || isNaN(parts[0])) return dateStr;
       const dt = new Date(parts[0], parts[1] - 1, parts[2]);
       return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // ---- Schema Normalizer (Unifies v1 & v2 Peer App & My App Formats) ----
+    function normalizePeerApp(app) {
+      if (!app || typeof app !== 'object') return null;
+      const d3Done = Boolean(app.intervalChecks?.d3 || app.intervalDay3?.completed);
+      const d7Done = Boolean(app.intervalChecks?.d7 || app.intervalDay7?.completed);
+      const d12Done = Boolean(app.intervalChecks?.d12 || app.intervalDay12?.completed);
+      const linkVal = app.link || app.testingLink || '';
+      const startVal = (app.startDate || getTodayStr()).split('T')[0];
+
+      return {
+        ...app,
+        id: app.id || ('peer_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+        name: app.name || 'Untitled App',
+        tester: app.tester === 'Marwan' ? 'Marwan' : 'Mazen',
+        startDate: startVal,
+        link: linkVal,
+        testingLink: linkVal,
+        intervalChecks: { d3: d3Done, d7: d7Done, d12: d12Done },
+        intervalDay3: { completed: d3Done, completedAt: app.intervalDay3?.completedAt || (d3Done ? new Date().toISOString() : null) },
+        intervalDay7: { completed: d7Done, completedAt: app.intervalDay7?.completedAt || (d7Done ? new Date().toISOString() : null) },
+        intervalDay12: { completed: d12Done, completedAt: app.intervalDay12?.completedAt || (d12Done ? new Date().toISOString() : null) }
+      };
+    }
+
+    function normalizeMyApp(app) {
+      if (!app || typeof app !== 'object') return null;
+      const createdVal = (app.createdDate || app.createdAt || getTodayStr()).split('T')[0];
+      return {
+        ...app,
+        id: app.id || ('myapp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)),
+        name: app.name || 'Untitled App',
+        link: app.link || app.testingLink || '',
+        category: app.category || '',
+        createdDate: createdVal,
+        icon: app.icon || '',
+        testers: Array.isArray(app.testers) ? app.testers : []
+      };
     }
 
     // ---- Toast Notification ----
@@ -552,7 +618,7 @@
       container.appendChild(el);
       setTimeout(() => {
         el.remove();
-      }, 3200);
+      }, 3600);
     }
 
     // ---- Confirmation Modal ----
@@ -579,7 +645,20 @@
       closeConfirmModal();
     });
 
-    // ---- Sync Config Persistence (Local Browser Auto-Save & Auto-Load) ----
+    // ---- Sync URL Builder & Config Persistence ----
+    function buildSyncEndpointUrl(rawUrl) {
+      if (!rawUrl) return '';
+      let cleaned = rawUrl.trim();
+      if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+        cleaned = 'https://' + cleaned;
+      }
+      cleaned = cleaned.replace(/\/+$/, '');
+      if (!cleaned.endsWith('/api/sync')) {
+        cleaned = cleaned + '/api/sync';
+      }
+      return cleaned;
+    }
+
     function getSyncConfig() {
       let workerUrl = localStorage.getItem(LEGACY_URL_KEY) || '';
       let syncKey = localStorage.getItem(LEGACY_PASS_KEY) || '';
@@ -597,11 +676,14 @@
     function saveSyncCredentialsInstant() {
       const urlEl = document.getElementById('inputWorkerUrl');
       const keyEl = document.getElementById('inputSyncKey');
-      const workerUrl = urlEl ? urlEl.value.trim() : '';
+      let workerUrl = urlEl ? urlEl.value.trim() : '';
       const syncKey = keyEl ? keyEl.value.trim() : '';
+      if (workerUrl && !workerUrl.startsWith('http://') && !workerUrl.startsWith('https://')) {
+        workerUrl = 'https://' + workerUrl;
+      }
       localStorage.setItem(LEGACY_URL_KEY, workerUrl);
       localStorage.setItem(LEGACY_PASS_KEY, syncKey);
-      localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify({ workerUrl, syncKey }));
+      localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify({ workerUrl, syncKey, autoSync: true }));
       updateSyncIndicatorUI();
     }
 
@@ -628,18 +710,42 @@
       }
     }
 
-    // ---- Local Storage Load & Save ----
+    // ---- Local Storage Load & Save (With Automatic Migration from v1 Keys) ----
     function loadLocalState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          state.apps = Array.isArray(parsed.apps) ? parsed.apps : [];
-          state.peerApps = Array.isArray(parsed.peerApps) ? parsed.peerApps : [];
+          state.apps = Array.isArray(parsed.apps) ? parsed.apps.map(normalizeMyApp).filter(Boolean) : [];
+          state.peerApps = Array.isArray(parsed.peerApps) ? parsed.peerApps.map(normalizePeerApp).filter(Boolean) : [];
           state.archivedApps = Array.isArray(parsed.archivedApps) ? parsed.archivedApps : [];
           state.trashedApps = Array.isArray(parsed.trashedApps) ? parsed.trashedApps : [];
           state.categories = Array.isArray(parsed.categories) ? parsed.categories : [];
           state.updatedAt = parsed.updatedAt || null;
+        }
+
+        // Also check legacy keys if current arrays are empty so no older local data is stranded
+        if (state.peerApps.length === 0) {
+          const rawLegacyPeer = localStorage.getItem(LEGACY_PEER_KEY);
+          if (rawLegacyPeer) {
+            const parsedPeer = JSON.parse(rawLegacyPeer);
+            if (Array.isArray(parsedPeer) && parsedPeer.length > 0) {
+              state.peerApps = parsedPeer.map(normalizePeerApp).filter(Boolean);
+            }
+          }
+        }
+
+        if (state.apps.length === 0) {
+          const rawLegacyApps = localStorage.getItem(LEGACY_APPS_KEY);
+          if (rawLegacyApps) {
+            const parsedApps = JSON.parse(rawLegacyApps);
+            if (parsedApps && Array.isArray(parsedApps.apps) && parsedApps.apps.length > 0) {
+              state.apps = parsedApps.apps.map(normalizeMyApp).filter(Boolean);
+            }
+            if (parsedApps && Array.isArray(parsedApps.categories) && state.categories.length === 0) {
+              state.categories = parsedApps.categories;
+            }
+          }
         }
       } catch (e) {
         console.error('Failed to read local state:', e);
@@ -647,10 +753,17 @@
       purgeExpiredTrash(false);
     }
 
+    function persistToBrowserStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      // Mirror to legacy keys so both pages stay 100% in sync locally too
+      localStorage.setItem(LEGACY_PEER_KEY, JSON.stringify(state.peerApps));
+      localStorage.setItem(LEGACY_APPS_KEY, JSON.stringify({ apps: state.apps, categories: state.categories }));
+    }
+
     function saveLocalState(triggerCloudPush = true) {
       state.updatedAt = new Date().toISOString();
       purgeExpiredTrash(false);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      persistToBrowserStorage();
       renderAll();
       if (triggerCloudPush) {
         syncWithCloud('push', false);
@@ -658,7 +771,6 @@
     }
 
     // ---- Trash Bin 14-Day Test Period Auto-Purge ----
-    // Example: App added Oct 1 -> 14d finish line is Oct 15 -> Restorable until Oct 15, after which permanently wiped out.
     function computeAppTrashExpiry(appObj, originType) {
       let baseStart = getTodayStr();
       if (originType === 'others' && appObj.startDate) {
@@ -674,11 +786,11 @@
       const beforeCount = state.trashedApps.length;
       state.trashedApps = state.trashedApps.filter(item => {
         const expiry = item.expiresAt || computeAppTrashExpiry(item, item.originType);
-        return today <= expiry; // Keep through the 14d finish line date; wipe once today > expiry
+        return today <= expiry;
       });
       const removed = beforeCount - state.trashedApps.length;
       if (removed > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        persistToBrowserStorage();
         if (notifyUser) {
           showToast(`Permanently wiped ${removed} expired app(s) past their 14-day test window.`, 'info');
         }
@@ -688,7 +800,18 @@
       if (notifyUser) renderAll();
     }
 
-    // ---- Cloud Sync (Auto-Pull on Load & Auto-Push on Changes) ----
+    function getTotalItemsCount(obj) {
+      if (!obj || typeof obj !== 'object') return 0;
+      return (
+        (Array.isArray(obj.apps) ? obj.apps.length : 0) +
+        (Array.isArray(obj.peerApps) ? obj.peerApps.length : 0) +
+        (Array.isArray(obj.archivedApps) ? obj.archivedApps.length : 0) +
+        (Array.isArray(obj.trashedApps) ? obj.trashedApps.length : 0) +
+        (Array.isArray(obj.categories) ? obj.categories.length : 0)
+      );
+    }
+
+    // ---- Cloud Sync (Fixed /api/sync Endpoint + Wrapped & Unwrapped Payload Unpacking + Empty Overwrite Guard) ----
     async function syncWithCloud(direction = 'pull', manualNotify = false) {
       const { workerUrl, syncKey } = getSyncConfig();
       if (!workerUrl || !syncKey) {
@@ -699,56 +822,153 @@
         return;
       }
 
+      const endpointUrl = buildSyncEndpointUrl(workerUrl);
       updateSyncIndicatorUI('syncing');
+
       try {
         if (direction === 'pull') {
-          const res = await fetch(workerUrl, {
+          const res = await fetch(endpointUrl, {
             method: 'GET',
-            headers: { 'X-Sync-Key': syncKey }
+            headers: {
+              'x-sync-key': syncKey
+            }
           });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const cloudData = await res.json();
-          if (cloudData && typeof cloudData === 'object') {
-            const hasCloudContent =
-              (Array.isArray(cloudData.apps) && cloudData.apps.length > 0) ||
-              (Array.isArray(cloudData.peerApps) && cloudData.peerApps.length > 0) ||
-              (Array.isArray(cloudData.archivedApps) && cloudData.archivedApps.length > 0) ||
-              (Array.isArray(cloudData.trashedApps) && cloudData.trashedApps.length > 0) ||
-              (Array.isArray(cloudData.categories) && cloudData.categories.length > 0) ||
-              cloudData.updatedAt;
+          const rawJson = await res.json();
 
-            if (hasCloudContent) {
-              state.apps = Array.isArray(cloudData.apps) ? cloudData.apps : [];
-              state.peerApps = Array.isArray(cloudData.peerApps) ? cloudData.peerApps : [];
-              state.archivedApps = Array.isArray(cloudData.archivedApps) ? cloudData.archivedApps : [];
-              state.trashedApps = Array.isArray(cloudData.trashedApps) ? cloudData.trashedApps : [];
-              state.categories = Array.isArray(cloudData.categories) ? cloudData.categories : [];
-              state.updatedAt = cloudData.updatedAt || new Date().toISOString();
-              purgeExpiredTrash(false);
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-              renderAll();
-            }
+          // Check KV binding status from Worker response
+          if (rawJson && rawJson.kvBound === false) {
+            document.getElementById('kvWarningBanner')?.classList.remove('hidden');
           }
+
+          // Unwrap payload whether Worker returned { success: true, data: { ... } } or direct { apps, peerApps, ... }
+          const cloudPayload = (rawJson && rawJson.data && typeof rawJson.data === 'object')
+            ? rawJson.data
+            : rawJson;
+
+          if (!cloudPayload || rawJson.exists === false) {
+            updateSyncIndicatorUI();
+            const localCount = getTotalItemsCount(state);
+            if (localCount > 0) {
+              if (manualNotify) {
+                showToast('Cloud was empty — pushing your local apps to Cloudflare now!', 'info');
+              }
+              await syncWithCloud('push', manualNotify);
+            } else if (manualNotify) {
+              showToast('Cloud connected! No saved apps found in cloud yet.', 'info');
+            }
+            return;
+          }
+
+          const cloudItemCount = getTotalItemsCount(cloudPayload);
+          const localItemCount = getTotalItemsCount(state);
+
+          // Safety guard: never wipe non-empty local data if cloud payload is completely empty
+          if (cloudItemCount === 0 && localItemCount > 0) {
+            updateSyncIndicatorUI();
+            if (manualNotify) {
+              showToast('Cloud record is empty; kept your local apps safe and pushing them to Cloud!', 'warn');
+            }
+            await syncWithCloud('push', false);
+            return;
+          }
+
+          if (Array.isArray(cloudPayload.apps)) {
+            state.apps = cloudPayload.apps.map(normalizeMyApp).filter(Boolean);
+          }
+          if (Array.isArray(cloudPayload.peerApps)) {
+            state.peerApps = cloudPayload.peerApps.map(normalizePeerApp).filter(Boolean);
+          }
+          if (Array.isArray(cloudPayload.archivedApps)) {
+            state.archivedApps = cloudPayload.archivedApps;
+          }
+          if (Array.isArray(cloudPayload.trashedApps)) {
+            state.trashedApps = cloudPayload.trashedApps;
+          }
+          if (Array.isArray(cloudPayload.categories)) {
+            state.categories = cloudPayload.categories;
+          }
+          state.updatedAt = cloudPayload.updatedAt || new Date().toISOString();
+
+          purgeExpiredTrash(false);
+          persistToBrowserStorage();
+          renderAll();
           updateSyncIndicatorUI();
-          if (manualNotify) showToast('Pulled latest data from Cloudflare!', 'success');
+
+          if (manualNotify) {
+            showToast(`Pulled ${state.peerApps.length} peer app(s) & ${state.apps.length} my app(s) from Cloud!`, 'success');
+          }
         } else {
-          const res = await fetch(workerUrl, {
+          const res = await fetch(endpointUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'X-Sync-Key': syncKey
+              'x-sync-key': syncKey
             },
             body: JSON.stringify(state)
           });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const rawJson = await res.json();
+          if (rawJson && rawJson.kvBound === false) {
+            document.getElementById('kvWarningBanner')?.classList.remove('hidden');
+          }
           updateSyncIndicatorUI();
-          if (manualNotify) showToast('Synced data to Cloudflare!', 'success');
+          if (manualNotify) {
+            showToast(`Pushed ${state.peerApps.length} peer app(s) & ${state.apps.length} my app(s) to Cloud!`, 'success');
+          }
         }
       } catch (err) {
         updateSyncIndicatorUI('error');
         if (manualNotify) {
-          showToast(`Cloud sync error: ${err.message}`, 'error');
+          showToast(`Cloud sync error (${endpointUrl}): ${err.message}`, 'error');
         }
+      }
+    }
+
+    async function testCloudConnection() {
+      saveSyncCredentialsInstant();
+      const { workerUrl, syncKey } = getSyncConfig();
+      const box = document.getElementById('syncDiagnosticBox');
+      const badge = document.getElementById('kvDiagnosticBadge');
+      box.classList.remove('hidden');
+
+      if (!workerUrl || !syncKey) {
+        box.innerHTML = `<div class="text-amber-400">Please enter both Worker URL and Sync Passkey above.</div>`;
+        return;
+      }
+
+      const syncUrl = buildSyncEndpointUrl(workerUrl);
+      box.innerHTML = `<div class="text-slate-400">Testing GET ${escapeHtml(syncUrl)} ...</div>`;
+
+      try {
+        const res = await fetch(syncUrl, {
+          method: 'GET',
+          headers: { 'x-sync-key': syncKey }
+        });
+        const json = await res.json();
+        const payload = (json && json.data && typeof json.data === 'object') ? json.data : json;
+        const peerCount = Array.isArray(payload?.peerApps) ? payload.peerApps.length : 0;
+        const myCount = Array.isArray(payload?.apps) ? payload.apps.length : 0;
+        const kvBound = json.kvBound;
+
+        if (kvBound === false) {
+          badge.className = 'text-[11px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40';
+          badge.textContent = '⚠️ In-Memory Only (No KV)';
+        } else {
+          badge.className = 'text-[11px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+          badge.textContent = '✓ Connected';
+        }
+
+        box.innerHTML = `
+          <div class="text-emerald-400 font-bold">✓ HTTP ${res.status} OK — Endpoint: ${escapeHtml(syncUrl)}</div>
+          <div>Cloud Peer Apps: <strong>${peerCount}</strong> | Cloud My Apps: <strong>${myCount}</strong></div>
+          <div>KV Storage Bound: <strong>${kvBound === false ? 'NO (Temporary memory! Bind PLAY_TESTER_KV in Cloudflare)' : 'YES / Active'}</strong></div>
+          <div>Last Updated: ${escapeHtml(payload?.updatedAt || 'Never')}</div>
+        `;
+      } catch (err) {
+        badge.className = 'text-[11px] px-2 py-0.5 rounded bg-red-500/20 text-red-300 border border-red-500/40';
+        badge.textContent = '✕ Connection Failed';
+        box.innerHTML = `<div class="text-red-400">✕ Error connecting to ${escapeHtml(syncUrl)}: ${escapeHtml(err.message)}</div>`;
       }
     }
 
@@ -802,7 +1022,11 @@
     function evaluatePeerAppStatus(app) {
       const today = getTodayStr();
       const intervals = [3, 7, 12];
-      const checks = app.intervalChecks || { d3: false, d7: false, d12: false };
+      const checks = {
+        d3: Boolean(app.intervalChecks?.d3 || app.intervalDay3?.completed),
+        d7: Boolean(app.intervalChecks?.d7 || app.intervalDay7?.completed),
+        d12: Boolean(app.intervalChecks?.d12 || app.intervalDay12?.completed)
+      };
 
       let isDueToday = false;
       let isOverdue = false;
@@ -829,7 +1053,7 @@
       const mandatoryEndDate = addDays(app.startDate, 14);
       const bufferEndDate = addDays(app.startDate, 16);
       const daysElapsed = Math.max(0, diffDays(app.startDate, today));
-      const mandatory14Passed = today >= mandatoryEndDate; // 14 full days elapsed
+      const mandatory14Passed = today >= mandatoryEndDate;
       const buffer16Passed = today >= bufferEndDate;
       const canComplete = allSubTestsDone && mandatory14Passed;
 
@@ -852,7 +1076,7 @@
       return state.peerApps
         .filter(app => {
           if (currentTesterFilter !== 'All' && app.tester !== currentTesterFilter) return false;
-          if (q && !app.name.toLowerCase().includes(q)) return false;
+          if (q && !(app.name || '').toLowerCase().includes(q)) return false;
           return true;
         })
         .sort((a, b) => (a.startDate || '').localeCompare(b.startDate || ''));
@@ -955,6 +1179,7 @@
       grid.innerHTML = list.map(app => {
         const st = evaluatePeerAppStatus(app);
         const progressPct = Math.min(100, Math.round((st.daysElapsed / 16) * 100));
+        const appUrl = app.link || app.testingLink || '';
 
         const renderIntervalBtn = (key, label) => {
           const meta = st.intervalMeta[key];
@@ -1052,8 +1277,8 @@
             <!-- Card Footer Actions (Complete Locked Until All 3 Sub-Tests + 14d Passed) -->
             <div class="pt-2 border-t border-slate-800/80 flex flex-col gap-2">
               <div class="flex items-center gap-2">
-                ${app.link ? `
-                  <a href="${escapeHtml(app.link)}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold text-center shrink-0">
+                ${appUrl ? `
+                  <a href="${escapeHtml(appUrl)}" target="_blank" rel="noopener noreferrer" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold text-center shrink-0">
                     ▶ Play Store
                   </a>
                 ` : ''}
@@ -1082,7 +1307,17 @@
       const app = state.peerApps.find(a => a.id === appId);
       if (!app) return;
       if (!app.intervalChecks) app.intervalChecks = { d3: false, d7: false, d12: false };
-      app.intervalChecks[intervalKey] = !app.intervalChecks[intervalKey];
+      const newVal = !app.intervalChecks[intervalKey];
+      app.intervalChecks[intervalKey] = newVal;
+
+      // Also sync legacy intervalDay3/7/12 properties
+      const dayNum = intervalKey.replace('d', '');
+      const legacyKey = `intervalDay${dayNum}`;
+      app[legacyKey] = {
+        completed: newVal,
+        completedAt: newVal ? new Date().toISOString() : null
+      };
+
       saveLocalState(true);
     }
 
@@ -1170,14 +1405,15 @@
       const link = document.getElementById('peerAppLink').value.trim();
       if (!name) return;
 
-      state.peerApps.push({
+      state.peerApps.push(normalizePeerApp({
         id: 'peer_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
         name,
         tester,
         startDate,
         link,
+        testingLink: link,
         intervalChecks: { d3: false, d7: false, d12: false }
-      });
+      }));
 
       closePeerAppModal();
       saveLocalState(true);
@@ -1215,7 +1451,7 @@
       const icon = document.getElementById('myAppIcon').value.trim();
       if (!name || !link) return;
 
-      state.apps.push({
+      state.apps.push(normalizeMyApp({
         id: 'myapp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
         name,
         link,
@@ -1223,7 +1459,7 @@
         createdDate,
         icon,
         testers: []
-      });
+      }));
 
       closeMyAppModal();
       saveLocalState(true);
@@ -1299,12 +1535,12 @@
 
       let filtered = state.apps.filter(a => {
         if (currentCategoryFilter !== 'All' && a.category !== currentCategoryFilter) return false;
-        if (q && !a.name.toLowerCase().includes(q)) return false;
+        if (q && !(a.name || '').toLowerCase().includes(q)) return false;
         return true;
       });
 
       filtered.sort((a, b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '');
         if (sortBy === 'testers') return (b.testers?.length || 0) - (a.testers?.length || 0);
         return (b.createdDate || '').localeCompare(a.createdDate || '');
       });
@@ -1553,9 +1789,9 @@
       const item = state.archivedApps[idx];
       state.archivedApps.splice(idx, 1);
       if (item.originType === 'others') {
-        state.peerApps.push(item);
+        state.peerApps.push(normalizePeerApp(item));
       } else {
-        state.apps.push(item);
+        state.apps.push(normalizeMyApp(item));
       }
       saveLocalState(true);
       showToast(`Moved "${item.name}" back to active apps!`, 'success');
@@ -1649,10 +1885,10 @@
 
       if (item.originType === 'others') {
         delete restored.originType;
-        state.peerApps.push(restored);
+        state.peerApps.push(normalizePeerApp(restored));
       } else {
         delete restored.originType;
-        state.apps.push(restored);
+        state.apps.push(normalizeMyApp(restored));
       }
 
       saveLocalState(true);

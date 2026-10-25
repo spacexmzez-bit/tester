@@ -1,12 +1,8 @@
 /**
- * Google Play 12-Tester & Peer App Testing Sync - Cloudflare Worker
- * Lightweight JSON sync engine with KV backing and CORS support.
- * Syncs:
- *  - apps (My Apps 12-tester tracker)
- *  - peerApps (Testing Others' Apps - Mazen & Marwan)
- *  - archivedApps (Completed apps archive)
- *  - trashedApps (Trash bin with 14-day test period auto-expiry)
- *  - categories (Custom app categories)
+ * Google Play 12-Tester & Peer App Testing Sync - Cloudflare Worker (v2.1)
+ * Supports both root (/) and (/api/sync) endpoints for seamless compatibility,
+ * and returns both wrapped { success, exists, kvBound, data } and top-level
+ * fields so any client version can read and write without data loss.
  */
 
 const memoryStore = new Map();
@@ -16,7 +12,7 @@ function corsHeaders(request) {
   return {
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, x-sync-key, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, x-sync-key, X-Sync-Key, Authorization',
     'Access-Control-Max-Age': '86400',
   };
 }
@@ -24,6 +20,7 @@ function corsHeaders(request) {
 function jsonResponse(data, status = 200, request = null) {
   const headers = {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
     ...(request ? corsHeaders(request) : { 'Access-Control-Allow-Origin': '*' }),
   };
   return new Response(JSON.stringify(data, null, 2), { status, headers });
@@ -41,20 +38,24 @@ export default {
       });
     }
 
-    // Health check endpoint
-    if (url.pathname === '/' || url.pathname === '/api/health') {
+    const syncKey =
+      request.headers.get('x-sync-key') ||
+      request.headers.get('X-Sync-Key') ||
+      url.searchParams.get('key');
+
+    // Dedicated health endpoint (or GET / without a sync key)
+    if (url.pathname === '/api/health' || (url.pathname === '/' && request.method === 'GET' && !syncKey)) {
       return jsonResponse({
         status: 'ok',
         service: 'Google Play 12-Tester & Peer Testing Sync Worker',
-        version: '2.0.0',
+        version: '2.1.0',
         kvBound: !!env.PLAY_TESTER_KV,
         timestamp: new Date().toISOString(),
       }, 200, request);
     }
 
-    // Sync API endpoints
-    if (url.pathname === '/api/sync') {
-      const syncKey = request.headers.get('x-sync-key') || url.searchParams.get('key');
+    // Accept sync requests on BOTH '/api/sync' AND '/' (in case user enters root Worker URL)
+    if (url.pathname === '/api/sync' || url.pathname === '/') {
       if (!syncKey || syncKey.trim().length === 0) {
         return jsonResponse({
           success: false,
@@ -78,6 +79,7 @@ export default {
             return jsonResponse({
               success: true,
               exists: false,
+              kvBound: !!env.PLAY_TESTER_KV,
               data: null,
               message: 'No data found for this sync key. Ready to receive initial push.',
             }, 200, request);
@@ -86,7 +88,15 @@ export default {
           return jsonResponse({
             success: true,
             exists: true,
+            kvBound: !!env.PLAY_TESTER_KV,
             data: stored,
+            // Also expose top-level keys for backwards/forwards compatibility
+            apps: stored.apps || [],
+            peerApps: stored.peerApps || [],
+            archivedApps: stored.archivedApps || [],
+            trashedApps: stored.trashedApps || [],
+            categories: stored.categories || [],
+            updatedAt: stored.updatedAt || null,
             retrievedAt: new Date().toISOString(),
           }, 200, request);
         } catch (err) {
@@ -100,7 +110,8 @@ export default {
       // POST: Save user data
       if (request.method === 'POST') {
         try {
-          const payload = await request.json();
+          const rawBody = await request.json();
+          const payload = (rawBody && rawBody.data && typeof rawBody.data === 'object') ? rawBody.data : rawBody;
 
           if (!payload || typeof payload !== 'object') {
             return jsonResponse({
@@ -109,7 +120,6 @@ export default {
             }, 400, request);
           }
 
-          // Fetch existing data to safely merge partial updates
           let existingData = null;
           if (env.PLAY_TESTER_KV) {
             existingData = await env.PLAY_TESTER_KV.get(storageKey, { type: 'json' });
@@ -134,7 +144,7 @@ export default {
               ? payload.categories
               : (existingData?.categories || []),
             updatedAt: payload.updatedAt || new Date().toISOString(),
-            clientVersion: payload.clientVersion || '2.0',
+            clientVersion: '2.1',
           };
 
           const serialized = JSON.stringify(dataToSave);
@@ -153,8 +163,10 @@ export default {
 
           return jsonResponse({
             success: true,
+            kvBound: !!env.PLAY_TESTER_KV,
             message: 'Sync data saved successfully',
             updatedAt: dataToSave.updatedAt,
+            data: dataToSave,
             counts: {
               apps: dataToSave.apps.length,
               peerApps: dataToSave.peerApps.length,
